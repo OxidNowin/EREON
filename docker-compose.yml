@@ -1,0 +1,44 @@
+services:
+  app:
+    image: ereon:latest
+    container_name: ereon_app
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.app
+    restart: on-failure
+    ports:
+      - "8000:${APP_PORT:-8000}"
+    env_file:
+      - .env
+    labels:
+      log: "ereon"
+    networks:
+      - ereon_network
+    depends_on:
+      - postgres
+
+  postgres:
+    container_name: ereon_postgres
+    image: postgres:16-alpine
+    restart: on-failure
+    tty: true
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ 'CMD-SHELL', '-c', 'pg_isready -U $POSTGRES_USER -d $POSTGRES_DB' ]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+    networks:
+      - ereon_network
+
+volumes:
+  pg_data:
+
+networks:
+  ereon_network:
+    external: true
