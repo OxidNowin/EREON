@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select, update, and_
 
 from infra.postgres.models.user import User
 from infra.postgres.storage.base_storage import PostgresStorage
@@ -22,3 +22,17 @@ class UserStorage(PostgresStorage[User]):
         result = await self._db.execute(stmt)
         data_source = result.scalar_one_or_none()
         return data_source
+
+    async def check_user_code(self, telegram_id: int, entry_code: str) -> bool:
+        stmt = (
+            select(self.model_cls.telegram_id)
+            .where(
+                and_(
+                    self.model_cls.telegram_id == telegram_id,
+                    self.model_cls.entry_code == entry_code
+                )
+            )
+            .limit(1)
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar_one_or_none() is not None

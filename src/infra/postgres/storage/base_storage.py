@@ -17,7 +17,6 @@ class PostgresStorage(Generic[ModelT]):
     async def add(self, obj: ModelT) -> ModelT:
         self._db.add(obj)
         await self._db.flush()
-        await self._db.refresh(obj)
         return obj
 
     async def get_by_id(self, obj_id) -> ModelT | None:

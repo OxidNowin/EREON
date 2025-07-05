@@ -8,8 +8,8 @@ from infra.postgres.storage.base_storage import PostgresStorage
 class ReferralStorage(PostgresStorage[Referral]):
     model_cls = Referral
 
-    async def get_by_code(self, code: str) -> Referral | None:
-        stmt = select(self.model_cls).where(self.model_cls.code == code)
+    async def get_id_by_referral_code(self, code: str) -> int | None:
+        stmt = select(self.model_cls.telegram_id).where(self.model_cls.code == code)
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none()
 
