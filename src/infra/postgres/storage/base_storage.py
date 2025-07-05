@@ -13,3 +13,12 @@ class PostgresStorage(Generic[ModelT]):
 
     def __init__(self, db: AsyncSession) -> None:
         self._db: AsyncSession = db
+
+    async def add(self, obj: ModelT) -> ModelT:
+        self._db.add(obj)
+        await self._db.flush()
+        await self._db.refresh(obj)
+        return obj
+
+    async def get_by_id(self, obj_id) -> ModelT | None:
+        return await self._db.get(self.model_cls, obj_id)
