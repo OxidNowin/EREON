@@ -36,3 +36,10 @@ class UserStorage(PostgresStorage[User]):
         )
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none() is not None
+
+    async def update_entry_code(self, telegram_id: int, old_code: str, new_code: str) -> bool:
+        if not await self.check_user_code(telegram_id, old_code):
+            return False
+
+        await self.update_user_by_id(telegram_id, entry_code=new_code)
+        return True

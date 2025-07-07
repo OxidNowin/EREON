@@ -6,20 +6,20 @@ from infra.postgres.models import User, Referral, Wallet
 
 
 class RegisterService(BaseService):
-    async def register_user(self, user: UserCreate) -> None:
-        await self.create_user(user)
-        await self.create_referral(user)
-        await self.create_wallet(user)
+    async def register_user(self, telegram_id: int, user: UserCreate) -> None:
+        await self.create_user(telegram_id, user)
+        await self.create_referral(telegram_id, user)
+        await self.create_wallet(telegram_id)
 
-    async def create_user(self, user: UserCreate) -> User:
+    async def create_user(self, telegram_id: int, user: UserCreate) -> User:
         return await self.uow.user.add(
             User(
-                telegram_id=user.telegram_id,
+                telegram_id=telegram_id,
                 entry_code=user.entry_code,
             )
         )
 
-    async def create_referral(self, user: UserCreate) -> Referral:
+    async def create_referral(self, telegram_id: int, user: UserCreate) -> Referral:
         referred_by = None
         if user.referral_code is not None:
             referred_by = await self.uow.referral.get_id_by_referral_code(user.referral_code)
@@ -30,17 +30,17 @@ class RegisterService(BaseService):
 
         return await self.uow.referral.add(
             Referral(
-                telegram_id=user.telegram_id,
+                telegram_id=telegram_id,
                 referred_by=referred_by,
                 code=self.generate_referral_code(),
                 active=active,
             )
         )
 
-    async def create_wallet(self, user: UserCreate) -> Wallet:
+    async def create_wallet(self, telegram_id: int) -> Wallet:
         return await self.uow.wallet.add(
             Wallet(
-                telegram_id=user.telegram_id,
+                telegram_id=telegram_id,
                 token=self.generate_referral_code(),
                 address=self.generate_referral_code(),
             )
@@ -52,5 +52,5 @@ class RegisterService(BaseService):
 
 
 class LoginService(BaseService):
-    async def login_by_code(self, user: UserLogin) -> bool:
-        return await self.uow.user.check_user_code(telegram_id=user.telegram_id, entry_code=user.entry_code)
+    async def login_by_code(self, telegram_id: int, user: UserLogin) -> bool:
+        return await self.uow.user.check_user_code(telegram_id=telegram_id, entry_code=user.entry_code)
