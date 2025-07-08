@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 3e40f20b6801
+Revision ID: 158148f66fd8
 Revises:
-Create Date: 2025-07-05 22:49:11.969585
+Create Date: 2025-07-08 19:12:12.311270
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = "3e40f20b6801"
+revision: str = "158148f66fd8"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -89,8 +89,23 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("telegram_id", sa.BigInteger(), nullable=False),
-        sa.Column("token", sa.VARCHAR(length=255), nullable=False),
-        sa.Column("address", sa.VARCHAR(length=255), nullable=False),
+        sa.Column(
+            "currency",
+            sa.Enum("USDT", name="wallet_currency_enum", native_enum=False),
+            nullable=False,
+        ),
+        sa.Column(
+            "balance",
+            sa.Numeric(precision=20, scale=6),
+            server_default="0.0",
+            nullable=False,
+        ),
+        sa.Column(
+            "addresses",
+            sa.ARRAY(sa.String()),
+            server_default="{}",
+            nullable=False,
+        ),
         sa.Column(
             "status",
             sa.Enum(
@@ -122,9 +137,9 @@ def upgrade() -> None:
             ondelete="NO ACTION",
         ),
         sa.PrimaryKeyConstraint("wallet_id"),
-        sa.UniqueConstraint("address"),
-        sa.UniqueConstraint("telegram_id"),
-        sa.UniqueConstraint("token"),
+        sa.UniqueConstraint(
+            "currency", "telegram_id", name="uq_wallet_currency_telegram_id"
+        ),
     )
     op.create_index(
         op.f("ix_wallet_wallet_id"), "wallet", ["wallet_id"], unique=False

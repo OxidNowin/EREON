@@ -1,8 +1,10 @@
 from api.v1.auth.router import router as auth_router
 from api.v1.user.router import router as user_router
+from api.v1.wallet.router import router as wallet_router
 
 
 __all__ = [
     'auth_router',
     'user_router',
+    'wallet_router',
 ]

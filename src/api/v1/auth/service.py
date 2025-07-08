@@ -2,7 +2,7 @@ from uuid import uuid4
 
 from api.v1.base.service import BaseService
 from api.v1.auth.schemas import UserCreate, UserLogin
-from infra.postgres.models import User, Referral, Wallet
+from infra.postgres.models import User, Referral, Wallet, WalletCurrency
 
 
 class RegisterService(BaseService):
@@ -41,8 +41,8 @@ class RegisterService(BaseService):
         return await self.uow.wallet.add(
             Wallet(
                 telegram_id=telegram_id,
-                token=self.generate_referral_code(),
-                address=self.generate_referral_code(),
+                currency=WalletCurrency.USDT,
+                addresses=['TLcsfBDnvUTxF6ZiJZQANyKLyYLY9FbPKE'],
             )
         )
 

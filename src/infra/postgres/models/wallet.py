@@ -1,18 +1,24 @@
-from uuid import UUID
 from enum import Enum as PyEnum
+from decimal import Decimal
+from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
     ForeignKey,
-    VARCHAR,
     UUID as PGUUID,
     text,
     Enum,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql.schema import UniqueConstraint
+from sqlalchemy.sql.sqltypes import Numeric, ARRAY, String
 
 from infra.postgres.models.base import Base
 from infra.postgres.mixins import CreateUpdateTimestampMixin
+
+
+class WalletCurrency(str, PyEnum):
+    USDT = "USDT"
 
 
 class WalletStatus(str, PyEnum):
@@ -33,15 +39,32 @@ class Wallet(Base, CreateUpdateTimestampMixin):
     telegram_id: Mapped[int] = mapped_column(
         BigInteger,
         ForeignKey("user.telegram_id", onupdate="CASCADE", ondelete="NO ACTION"),
-        unique=True,
         nullable=False
     )
-    token: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
-    address: Mapped[str] = mapped_column(VARCHAR(255), unique=True, nullable=False)
+    currency: Mapped[WalletCurrency] = mapped_column(
+        Enum(WalletCurrency, name="wallet_currency_enum", native_enum=False),
+        nullable=False,
+    )
+    balance: Mapped[Decimal] = mapped_column(
+        Numeric(precision=20, scale=6),
+        nullable=False,
+        default=Decimal("0.0"),
+        server_default="0.0",
+    )
+    addresses: Mapped[list[str]] = mapped_column(
+        ARRAY(String),
+        nullable=False,
+        server_default="{}"
+    )
     status: Mapped[WalletStatus] = mapped_column(
         Enum(WalletStatus, name="wallet_status_enum", native_enum=False),
         default=WalletStatus.ACTIVE,
         server_default=WalletStatus.ACTIVE,
         nullable=False
     )
+
     user: Mapped["User"] = relationship("User", back_populates="wallet")
+
+    __table_args__ = (
+        UniqueConstraint("currency", "telegram_id", name="uq_wallet_currency_telegram_id"),
+    )
