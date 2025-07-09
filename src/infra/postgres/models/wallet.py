@@ -11,7 +11,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.schema import UniqueConstraint
-from sqlalchemy.sql.sqltypes import Numeric, ARRAY, String
+from sqlalchemy.sql.sqltypes import ARRAY, String, DECIMAL
 
 from infra.postgres.models.base import Base
 from infra.postgres.mixins import CreateUpdateTimestampMixin
@@ -46,7 +46,7 @@ class Wallet(Base, CreateUpdateTimestampMixin):
         nullable=False,
     )
     balance: Mapped[Decimal] = mapped_column(
-        Numeric(precision=20, scale=6),
+        DECIMAL(precision=20, scale=6),
         nullable=False,
         default=Decimal("0.0"),
         server_default="0.0",
@@ -64,6 +64,7 @@ class Wallet(Base, CreateUpdateTimestampMixin):
     )
 
     user: Mapped["User"] = relationship("User", back_populates="wallet")
+    operations: Mapped[list["Operation"]] = relationship("Operation", back_populates="wallet")
 
     __table_args__ = (
         UniqueConstraint("currency", "telegram_id", name="uq_wallet_currency_telegram_id"),
