@@ -9,9 +9,12 @@ from infra.postgres.storage.base_storage import PostgresStorage
 class WalletStorage(PostgresStorage[Wallet]):
     model_cls = Wallet
 
-    async def get_wallet_by_address(self, address: str) -> Wallet | None:
-        stmt = select(self.model_cls).where(
-            literal(address) == self.model_cls.addresses.any()
+    async def get_wallet_for_update(self, address: str) -> Wallet | None:
+        stmt = (
+            select(self.model_cls)
+            .where(self.model_cls.addresses.any(literal(address)))
+            .limit(1)
+            .with_for_update()
         )
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none()

@@ -4,8 +4,9 @@ from typing import Optional
 from enum import Enum as PyEnum
 
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import ForeignKey, String, DECIMAL, text
+from sqlalchemy import ForeignKey, DECIMAL, text
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
+from sqlalchemy.sql.sqltypes import Enum
 
 from infra.postgres.models.base import Base
 from infra.postgres.mixins import CreateTimestampMixin
@@ -37,8 +38,14 @@ class Operation(Base, CreateTimestampMixin):
         nullable=False,
         index=True,
     )
-    status: Mapped[str] = mapped_column(String(255), nullable=False)
-    operation_type: Mapped[str] = mapped_column(String(255), nullable=False)
+    status: Mapped[OperationStatus] = mapped_column(
+        Enum(OperationStatus, name="operation_status_enum", native_enum=False),
+        nullable=False,
+    )
+    operation_type: Mapped[OperationType] = mapped_column(
+        Enum(OperationType, name="operation_type_enum", native_enum=False),
+        nullable=False,
+    )
     amount: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=6), nullable=False)
     fee: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=6), nullable=False)
     total_amount: Mapped[Decimal] = mapped_column(DECIMAL(precision=20, scale=6), nullable=False)

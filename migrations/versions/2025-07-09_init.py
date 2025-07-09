@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 0ad6950a89eb
+Revision ID: b3e0c09b7461
 Revises:
-Create Date: 2025-07-09 17:42:38.177366
+Create Date: 2025-07-09 18:44:56.372442
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision: str = "0ad6950a89eb"
+revision: str = "b3e0c09b7461"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -153,8 +153,27 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("wallet_id", sa.UUID(), nullable=False),
-        sa.Column("status", sa.String(length=255), nullable=False),
-        sa.Column("operation_type", sa.String(length=255), nullable=False),
+        sa.Column(
+            "status",
+            sa.Enum(
+                "CONFIRMED",
+                "PENDING",
+                "CANCELLED",
+                name="operation_status_enum",
+                native_enum=False,
+            ),
+            nullable=False,
+        ),
+        sa.Column(
+            "operation_type",
+            sa.Enum(
+                "DEPOSIT",
+                "WITHDRAW",
+                name="operation_type_enum",
+                native_enum=False,
+            ),
+            nullable=False,
+        ),
         sa.Column("amount", sa.DECIMAL(precision=20, scale=6), nullable=False),
         sa.Column("fee", sa.DECIMAL(precision=20, scale=6), nullable=False),
         sa.Column(
@@ -196,6 +215,12 @@ def upgrade() -> None:
         ),
         sa.Column("crypto_type", sa.String(length=255), nullable=False),
         sa.Column("operation_id", sa.UUID(), nullable=False),
+        sa.Column(
+            "created_at",
+            sa.DateTime(),
+            server_default=sa.text("now()"),
+            nullable=False,
+        ),
         sa.ForeignKeyConstraint(
             ["operation_id"],
             ["operation.operation_id"],

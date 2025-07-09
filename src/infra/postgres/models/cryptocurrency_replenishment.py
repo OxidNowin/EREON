@@ -8,9 +8,10 @@ from sqlalchemy.sql.sqltypes import String
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from infra.postgres.models.base import Base
+from infra.postgres.mixins import CreateTimestampMixin
 
 
-class CryptocurrencyReplenishment(Base):
+class CryptocurrencyReplenishment(Base, CreateTimestampMixin):
     __tablename__ = "cryptocurrency_replenishment"
 
     tx_id: Mapped[str] = mapped_column(String(255), primary_key=True, index=True)
