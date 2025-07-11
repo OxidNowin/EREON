@@ -6,11 +6,15 @@ from api.v1.auth.service import (
     RegisterService,
     LoginService,
 )
+from crypto_processing.client import CryptoProcessingClient
 from infra.postgres.uow import PostgresUnitOfWorkDep
 
 
 async def get_register_service(uow: PostgresUnitOfWorkDep) -> AsyncIterator[RegisterService]:
-    yield RegisterService(uow=uow)
+    yield RegisterService(
+        uow=uow,
+        crypto_processing_client=CryptoProcessingClient()
+    )
 
 
 async def get_login_service(uow: PostgresUnitOfWorkDep) -> AsyncIterator[LoginService]:

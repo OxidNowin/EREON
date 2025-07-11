@@ -38,11 +38,14 @@ class RegisterService(BaseService):
         )
 
     async def create_wallet(self, telegram_id: int) -> Wallet:
+        async with self.crypto_processing_client as client:
+            address = await client.register_client()
+
         return await self.uow.wallet.add(
             Wallet(
                 telegram_id=telegram_id,
                 currency=WalletCurrency.USDT,
-                addresses=['TLcsfBDnvUTxF6ZiJZQANyKLyYLY9FbPKE'],
+                addresses=[address.trxAddress],
             )
         )
 

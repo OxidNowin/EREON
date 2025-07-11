@@ -1,7 +1,7 @@
 from api.v1.base.service import BaseService
 from api.v1.webhook.schemas import CryptocurrencyReplenishmentCreate
 from infra.postgres.models import CryptocurrencyReplenishment, Operation, OperationStatus, OperationType
-from processing.network import matcher
+from crypto_processing.network import matcher
 
 
 class WebhookService(BaseService):

@@ -4,7 +4,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from infra.postgres.models import WalletCurrency
-from processing.network import matcher
+from crypto_processing.network import matcher
 
 
 class Address(BaseModel):
