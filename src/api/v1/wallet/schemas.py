@@ -1,11 +1,10 @@
 from decimal import Decimal
-from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_validator
 
 from infra.postgres.models import WalletCurrency
-from processing.network import WalletAddressMatcher
+from processing.network import matcher
 
 
 class Address(BaseModel):
@@ -28,7 +27,7 @@ class WalletResponse(BaseModel):
 
         return [
             {"network": network, "address": address}
-            for network, address in WalletAddressMatcher().iter_matched(raw_addresses)
+            for network, address in matcher.iter_matched(raw_addresses)
         ]
 
 
