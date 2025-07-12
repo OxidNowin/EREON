@@ -7,6 +7,9 @@ from infra.postgres.models import User, Referral, Wallet, WalletCurrency
 
 class RegisterService(BaseService):
     async def register_user(self, telegram_id: int, user: UserCreate) -> None:
+        if await self.uow.user.exists(telegram_id):
+            raise
+
         await self.create_user(telegram_id, user)
         await self.create_referral(telegram_id, user)
         await self.create_wallet(telegram_id)

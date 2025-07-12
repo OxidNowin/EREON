@@ -7,6 +7,15 @@ from infra.postgres.storage.base_storage import PostgresStorage
 class UserStorage(PostgresStorage[User]):
     model_cls = User
 
+    async def exists(self, telegram_id: int) -> bool:
+        stmt = (
+            select(self.model_cls.telegram_id)
+            .where(self.model_cls.telegram_id == telegram_id)
+            .limit(1)
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
     async def get_user_by_email(self, email: str) -> User | None:
         stmt = select(self.model_cls).where(self.model_cls.email == email)
         result = await self._db.execute(stmt)
