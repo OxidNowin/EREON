@@ -14,7 +14,7 @@ async def get_currencies(wallet_service: WalletServiceDep) -> WalletCurrencyList
     return wallet_service.get_currencies()
 
 
-@router.get("/all", response_model=list[WalletResponse])
+@router.get("", response_model=list[WalletResponse])
 async def get_all_wallets(
     telegram_id: TelegramIDDep,
     wallet_service: WalletServiceDep
