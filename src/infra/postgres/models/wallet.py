@@ -63,7 +63,7 @@ class Wallet(Base, CreateUpdateTimestampMixin):
         nullable=False
     )
 
-    user: Mapped["User"] = relationship("User", back_populates="wallet")
+    user: Mapped["User"] = relationship("User", back_populates="wallets")
     operations: Mapped[list["Operation"]] = relationship("Operation", back_populates="wallet")
 
     __table_args__ = (

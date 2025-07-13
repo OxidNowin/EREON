@@ -11,7 +11,7 @@ class User(Base, CreateTimestampMixin):
     telegram_id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
     email: Mapped[str | None] = mapped_column(Text, nullable=True, unique=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
-    entry_code: Mapped[str] = mapped_column(CHAR(4), nullable=False)
+    entry_code: Mapped[str | None] = mapped_column(CHAR(4), nullable=True)
 
     referral: Mapped["Referral"] = relationship(
         "Referral",
@@ -19,10 +19,9 @@ class User(Base, CreateTimestampMixin):
         uselist=False,
         foreign_keys="[Referral.telegram_id]",
     )
-    wallet: Mapped["Wallet"] = relationship(
+    wallets: Mapped[list["Wallet"]] = relationship(
         "Wallet",
-        back_populates="user",
-        uselist=False
+        back_populates="user"
     )
     referred_users: Mapped[list["Referral"]] = relationship(
         "Referral",

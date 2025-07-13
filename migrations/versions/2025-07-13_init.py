@@ -1,8 +1,8 @@
 """init
 
-Revision ID: b3e0c09b7461
+Revision ID: b3ad74d830f3
 Revises:
-Create Date: 2025-07-09 18:44:56.372442
+Create Date: 2025-07-13 00:49:35.028297
 
 """
 
@@ -13,7 +13,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import mysql
 
 # revision identifiers, used by Alembic.
-revision: str = "b3e0c09b7461"
+revision: str = "b3ad74d830f3"
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -32,7 +32,7 @@ def upgrade() -> None:
             server_default="false",
             nullable=False,
         ),
-        sa.Column("entry_code", sa.CHAR(length=4), nullable=False),
+        sa.Column("entry_code", sa.CHAR(length=4), nullable=True),
         sa.Column(
             "created_at",
             sa.DateTime(),
