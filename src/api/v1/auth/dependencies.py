@@ -31,8 +31,8 @@ async def get_login_service(uow: PostgresUnitOfWorkDep) -> AsyncIterator[LoginSe
 
 async def get_current_user(
     service: Annotated[RegisterService, Depends(get_register_service)],
-    auth_cred: HTTPAuthorizationCredentials = Depends(telegram_authentication_schema),
-    telegram_authenticator: TelegramAuthenticator = Depends(get_telegram_authenticator),
+    auth_cred: Annotated[HTTPAuthorizationCredentials, Depends(telegram_authentication_schema)],
+    telegram_authenticator: Annotated[TelegramAuthenticator, Depends(get_telegram_authenticator)],
 ) -> WebAppUser:
     try:
         init_data = telegram_authenticator.validate(auth_cred.credentials)
