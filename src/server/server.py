@@ -42,9 +42,16 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 
 
 def create_app() -> FastAPI:
+    description = (
+        "**API for EREON**\n\n"
+        "**Инструкция по авторизации:**\n\n"
+        "1. Перейдите в [ТГ-бота](https://t.me/ereon_test_bot) и откройте в нем TMA\n"
+        "2. Скопируйте TelegramInitData -- это будет ваш Bearer Token\n"
+        "3. Чтобы протестировать в свагере: нажмите кнопку **Authorize** и вставьте туда полученную строку"
+    )
     _app = FastAPI(
         title="EREON",
-        description="API for EREON",
+        description=description,
         version="1.0.0",
         lifespan=lifespan,
         docs_url=settings.docs_url,
