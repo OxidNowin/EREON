@@ -5,7 +5,7 @@ from core.config.constants import ENV_FILE_PATH
 
 
 class TelegramBotConfig(BaseSettings):
-    telegram_bot_token: str = Field(..., description="Токен бота телеграм, через которого запускается MiniApp")
+    telegram_bot_token: str = Field(default="", description="Токен бота телеграм, через которого запускается MiniApp")
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE_PATH,
