@@ -1,9 +1,9 @@
 from uuid import UUID
 from typing import Sequence
 
-from sqlalchemy import select, and_, update
+from sqlalchemy import select, update
 
-from infra.postgres.models import Operation, OperationStatus, Wallet
+from infra.postgres.models import Operation, Wallet
 from infra.postgres.storage.base_storage import PostgresStorage
 
 

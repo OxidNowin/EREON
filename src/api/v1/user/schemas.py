@@ -1,11 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 
 
-class UserResponse(BaseModel):
-    telegram_id: int
-    email: EmailStr
-
-
 class UserEmail(BaseModel):
     email: EmailStr = Field(..., description="Email address")
 

@@ -1,5 +1,5 @@
 from api.v1.base.service import BaseService
-from api.v1.user.schemas import UserEmail, UserChangeCode, UserResponse
+from api.v1.user.schemas import UserEmail, UserChangeCode
 
 
 class UserService(BaseService):

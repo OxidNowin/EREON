@@ -1,4 +1,4 @@
-from sqlalchemy import select, update
+from sqlalchemy import select
 
 from infra.postgres.models import CryptocurrencyReplenishment
 from infra.postgres.storage.base_storage import PostgresStorage
