@@ -1,7 +1,7 @@
 import json
 import os
 import sys
-
+import textwrap
 import urllib3
 import subprocess
 from pathlib import Path
@@ -348,6 +348,27 @@ def get_rsa(access_token: JWTToken, issued_certificate_id: str) -> str:
     data = response.json()
     with open("certs/certificate.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
+
+    base64_cert = data["content"]
+
+    # Шаг 2: декодируем экранированные символы (например, \\r\\n → \r\n)
+    decoded_base64_cert = base64_cert.encode().decode('unicode_escape')
+
+    # Шаг 3: удаляем перевод строки (если хотим сделать PEM вручную)
+    raw_base64 = decoded_base64_cert.replace("\r", "").replace("\n", "")
+
+    # Шаг 4: оборачиваем в PEM-структуру (с отступами по 64 символа)
+    pem_lines = [
+        "-----BEGIN CERTIFICATE-----",
+        *textwrap.wrap(raw_base64, 64),
+        "-----END CERTIFICATE-----"
+    ]
+
+    # Шаг 5: сохраняем в файл
+    cer_name = "prod_private_key.pem" if is_production() else "sandbox_private_key.pem"
+    with open(f"certs/{cer_name}", "w", encoding="utf-8") as f:
+        f.write("\n".join(pem_lines))
+    print(f"Сертификат был сохранен в certs/{cer_name}")
     print("Данные сертификата были сохранены в certs/certificate.json")
     return data["certificate"]["serialNumber"]
 
