@@ -214,7 +214,6 @@ class AlfaClient:
         return PaymentStatus(
             payment_id=payment_response.outgoing_payment_id,
             status=payment_response.status.value,
-            commission=payment_response.commission
         )
 
     async def sign_pkcs7_detached(self, digest_text: str) -> str:

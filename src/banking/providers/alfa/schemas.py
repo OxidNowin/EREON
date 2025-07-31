@@ -148,7 +148,6 @@ class PaymentStatusResponse(BaseModel):
     outgoing_payment_id: str = Field(..., description="Идентификатор платежа в СБП B2B")
     qrc_id: str = Field(..., description="Идентификатор платёжной ссылки")
     status: PaymentStatus = Field(..., description="Статус платежа")
-    commission: int | None = Field(None, description="Сумма комиссии в копейках")
     
     class Config:
         alias_generator = lambda field_name: {

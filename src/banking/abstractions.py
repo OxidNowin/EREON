@@ -9,13 +9,13 @@ ScopeType = TypeVar('ScopeType')
 class PaymentBase:
     payment_id: str
     status: str
-    commission: int
 
 
 @dataclass  
 class PaymentResult(PaymentBase):
     """Результат платежа"""
     amount: int
+    commission: int
 
 
 @dataclass
