@@ -39,7 +39,14 @@ class ITokenService(Protocol[ScopeType]):
 class IBankPaymentClient(Protocol):
     """Интерфейс для клиентов банковских API"""
     
-    async def process_payment(self, qrc_id: str) -> PaymentResult:
+    async def process_payment(
+            self,
+            qrc_id: str,
+            amount: int,
+            payment_purpose: str,
+            take_tax: bool,
+            tax_amount: int | None = None
+    ) -> PaymentResult:
         """Обработать платеж по QR-коду"""
         ...
     

@@ -119,18 +119,25 @@ class AlfaClient:
         
         return PaymentLinkData(**response_data)
 
-    async def process_payment(self, payment_link_data: PaymentLinkData) -> PaymentResult:
+    async def process_payment(
+            self,
+            qrc_id: str,
+            amount: int,
+            payment_purpose: str,
+            take_tax: bool,
+            tax_amount: int | None = None,
+    ) -> PaymentResult:
         """Обработать платеж по QR-коду"""
         token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
     
         payment_request = PaymentRequest(
             client=self.client_info,
-            qrc_id=payment_link_data.qrc_id,
+            qrc_id=qrc_id,
             payer_account=settings.alfa_payer_account,
-            amount=payment_link_data.amount,
-            payment_purpose=payment_link_data.payment_purpose,
-            take_tax=payment_link_data.take_tax,
-            tax_amount=payment_link_data.tax_amount,
+            amount=amount,
+            payment_purpose=payment_purpose,
+            take_tax=take_tax,
+            tax_amount=tax_amount,
         )
         
         digest = self._create_digest(payment_request)
@@ -155,7 +162,7 @@ class AlfaClient:
                 except Exception:
                     error_data = {}
                 raise AlfaApiError(
-                    message=f"Ошибка выполнения исходящего платежа: {payment_link_data.qrc_id}",
+                    message=f"Ошибка выполнения исходящего платежа: {qrc_id}",
                     status_code=resp.status,
                     response_data=error_data
                 )
@@ -167,7 +174,7 @@ class AlfaClient:
         return PaymentResult(
             payment_id=payment_response.outgoing_payment_id,
             status=payment_response.status.value,
-            amount=payment_link_data.amount,
+            amount=amount,
             commission=payment_response.commission
         )
 

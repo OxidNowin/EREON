@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import AsyncIterator
+from typing import AsyncIterator, Annotated
 
 from fastapi import Depends
 
@@ -35,3 +35,6 @@ async def get_default_bank_client(
 ) -> AsyncIterator[IBankPaymentClient]:
     """Получить клиент банка по умолчанию (Alfa Bank) с автоматическим закрытием сессии"""
     yield alfa_client
+
+
+BankClientDep = Annotated[IBankPaymentClient, Depends(get_default_bank_client)]
