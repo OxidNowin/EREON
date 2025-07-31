@@ -36,7 +36,29 @@ services:
     networks:
       - ereon_network
 
+  redis:
+    container_name: ereon_redis
+    image: redis:8.0-alpine
+    restart: on-failure
+    environment:
+      - TZ=Europe/Moscow
+    env_file:
+      - .env
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+    command: ["redis-server", "--requirepass", "$REDIS_PASSWORD"]
+    networks:
+      - ereon_network
+
 volumes:
+  redis_data:
   pg_data:
 
 networks:
