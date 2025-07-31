@@ -54,3 +54,4 @@ class Operation(Base, CreateTimestampMixin):
     crypto_replenishment: Mapped[Optional["CryptocurrencyReplenishment"]] = relationship(
         "CryptocurrencyReplenishment", back_populates="operation", uselist=False
     )
+    sbp_payments: Mapped[list["SbpPayment"]] = relationship("SbpPayment", back_populates="operation")
