@@ -24,6 +24,15 @@ class PaymentStatus(PaymentBase):
     ...
 
 
+@dataclass
+class PaymentLink:
+    qrc_id: str
+    amount: int
+    payment_purpose: str
+    take_tax: bool
+    tax_amount: int | None = None
+
+
 class ITokenService(Protocol[ScopeType]):
     """Общий интерфейс для сервиса управления токенами доступа"""
     
@@ -39,17 +48,14 @@ class ITokenService(Protocol[ScopeType]):
 class IBankPaymentClient(Protocol):
     """Интерфейс для клиентов банковских API"""
     
-    async def process_payment(
-            self,
-            qrc_id: str,
-            amount: int,
-            payment_purpose: str,
-            take_tax: bool,
-            tax_amount: int | None = None
-    ) -> PaymentResult:
+    async def process_payment(self, payment_link: PaymentLink) -> PaymentResult:
         """Обработать платеж по QR-коду"""
         ...
-    
+
+    async def get_payment_link_data(self, qrc_id: str) -> PaymentLink:
+        """Получить информацию по платежу"""
+        ...
+
     async def get_payment_status(self, payment_id: str) -> PaymentStatus | None:
         """Получить статус платежа"""
         ...
