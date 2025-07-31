@@ -119,12 +119,8 @@ class AlfaClient:
         
         return PaymentLinkData(**response_data)
 
-    async def process_payment(self, qrc_id: str) -> PaymentResult:
+    async def process_payment(self, payment_link_data: PaymentLinkData) -> PaymentResult:
         """Обработать платеж по QR-коду"""
-        # Получаем данные по платежной ссылке
-        payment_link_data = await self.get_payment_link_data(qrc_id)
-        
-        # Выполняем платеж
         token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
     
         payment_request = PaymentRequest(
@@ -159,7 +155,7 @@ class AlfaClient:
                 except Exception:
                     error_data = {}
                 raise AlfaApiError(
-                    message=f"Ошибка выполнения исходящего платежа: {qrc_id}",
+                    message=f"Ошибка выполнения исходящего платежа: {payment_link_data.qrc_id}",
                     status_code=resp.status,
                     response_data=error_data
                 )
