@@ -6,7 +6,7 @@ from crypto_processing.network import matcher
 
 class WebhookService(BaseService):
     async def add_balance(self, webhook_data: CryptocurrencyReplenishmentCreate):
-        wallet = await self.uow.wallet.get_wallet_for_update(webhook_data.to_address)
+        wallet = await self.uow.wallet.get_wallet_by_address_for_update(webhook_data.to_address)
         if not wallet:
             raise ValueError("Wallet not found")
 

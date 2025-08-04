@@ -1,6 +1,7 @@
 from typing import Sequence
+from uuid import UUID
 
-from sqlalchemy import select, literal
+from sqlalchemy import select, literal, and_
 
 from infra.postgres.models.wallet import Wallet
 from infra.postgres.storage.base_storage import PostgresStorage
@@ -9,10 +10,25 @@ from infra.postgres.storage.base_storage import PostgresStorage
 class WalletStorage(PostgresStorage[Wallet]):
     model_cls = Wallet
 
-    async def get_wallet_for_update(self, address: str) -> Wallet | None:
+    async def get_wallet_by_address_for_update(self, address: str) -> Wallet | None:
         stmt = (
             select(self.model_cls)
             .where(self.model_cls.addresses.any(literal(address)))
+            .limit(1)
+            .with_for_update()
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def get_wallet_by_id_for_update(self, wallet_id: UUID, user_id: UUID) -> Wallet | None:
+        stmt = (
+            select(self.model_cls)
+            .where(
+                and_(
+                    self.model_cls.telegram_id == user_id,
+                    self.model_cls.wallet_id == wallet_id,
+                )
+            )
             .limit(1)
             .with_for_update()
         )
