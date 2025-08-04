@@ -6,13 +6,24 @@ from infra.postgres.models import User, Referral, Wallet, WalletCurrency
 
 
 class RegisterService(BaseService):
+    USER_REDIS_SPACENAME: str = "user"
+
     async def exist(self, telegram_id: int) -> bool:
-        return await self.uow.user.exists(telegram_id)
+        key = f"{self.USER_REDIS_SPACENAME}:{telegram_id}"
+        if self.redis.exists(key):
+            return True
+
+        user_exist = await self.uow.user.exists(telegram_id)
+        if user_exist:
+            await self.redis.set(key, "", 3600)
+            return True
+        return False
 
     async def register_user(self, telegram_id: int, referral_code: str | None = None) -> None:
         await self._create_user(telegram_id)
         await self._create_referral(telegram_id, referral_code)
         await self._create_wallet(telegram_id)
+        await self.redis.set(f"{self.USER_REDIS_SPACENAME}:{telegram_id}", "", 3600)
 
     async def _create_user(self, telegram_id: int):
         await self.uow.user.add(User(telegram_id=telegram_id))

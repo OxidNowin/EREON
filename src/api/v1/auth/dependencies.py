@@ -9,6 +9,7 @@ from api.v1.auth.service import RegisterService, LoginService
 from core.config import settings
 from crypto_processing.client import CryptoProcessingClient
 from infra.postgres.uow import PostgresUnitOfWorkDep
+from infra.redis.dependencies import RedisDep
 
 telegram_authentication_schema = HTTPBase(scheme="Bearer")
 
@@ -18,10 +19,11 @@ def get_telegram_authenticator() -> TelegramAuthenticator:
     return TelegramAuthenticator(secret_key)
 
 
-async def get_register_service(uow: PostgresUnitOfWorkDep) -> AsyncIterator[RegisterService]:
+async def get_register_service(uow: PostgresUnitOfWorkDep, redis: RedisDep) -> AsyncIterator[RegisterService]:
     yield RegisterService(
         uow=uow,
-        crypto_processing_client=CryptoProcessingClient()
+        redis=redis,
+        crypto_processing_client=CryptoProcessingClient(),
     )
 
 
@@ -43,9 +45,9 @@ async def get_current_user(
 
     if init_data.user is None:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User not found in initData.")
+
     tg_user = init_data.user
 
-    # TODO сделать кэширование
     if not await service.exist(tg_user.id):
         # TODO выяснить как передаются аргументы и подставить реферальный код при регистрации
         await service.register_user(tg_user.id)
