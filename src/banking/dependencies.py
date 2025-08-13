@@ -1,22 +1,19 @@
-from contextlib import asynccontextmanager
 from typing import AsyncIterator, Annotated
 
 from fastapi import Depends
 
-from infra.redis.dependencies import get_redis
-from infra.redis.redis_api import RedisAPI
+from infra.redis.dependencies import RedisDep
 from banking.abstractions import ITokenService, IBankPaymentClient
 from banking.providers.alfa import AlfaClient, AlfaTokenService, AlfaScope
 
 
 def get_alfa_token_service(
-    redis: RedisAPI = Depends(get_redis),
+    redis=RedisDep,
 ) -> ITokenService[AlfaScope]:
     """Получить сервис управления токенами Alfa Bank"""
     return AlfaTokenService(redis=redis)
 
 
-@asynccontextmanager
 async def get_alfa_client(
     token_service: ITokenService[AlfaScope] = Depends(get_alfa_token_service),
 ) -> AsyncIterator[IBankPaymentClient]:
@@ -29,7 +26,6 @@ async def get_alfa_client(
 
 
 # Общие алиасы (по умолчанию используем Alfa Bank)
-@asynccontextmanager
 async def get_default_bank_client(
     alfa_client: IBankPaymentClient = Depends(get_alfa_client),
 ) -> AsyncIterator[IBankPaymentClient]:

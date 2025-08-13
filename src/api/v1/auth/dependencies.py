@@ -27,8 +27,11 @@ async def get_register_service(uow: PostgresUnitOfWorkDep, redis: RedisDep) -> A
     )
 
 
-async def get_login_service(uow: PostgresUnitOfWorkDep) -> AsyncIterator[LoginService]:
-    yield LoginService(uow=uow)
+async def get_login_service(uow: PostgresUnitOfWorkDep, redis: RedisDep) -> AsyncIterator[LoginService]:
+    yield LoginService(
+        uow=uow,
+        redis=redis
+    )
 
 
 async def get_current_user(
@@ -51,9 +54,12 @@ async def get_current_user(
     if not await service.exist(tg_user.id):
         # TODO выяснить как передаются аргументы и подставить реферальный код при регистрации
         await service.register_user(tg_user.id)
+
+    if not await service.is_login(tg_user.id):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="need to log in.")
+
     return tg_user
 
 
-RegisterServiceDep = Annotated[RegisterService, Depends(get_register_service)]
 LoginServiceDep = Annotated[LoginService, Depends(get_login_service)]
 UserAuthDep = Annotated[WebAppUser, Depends(get_current_user)]

@@ -1,4 +1,3 @@
-from contextlib import asynccontextmanager
 from typing import AsyncIterator, Annotated
 
 from fastapi import Depends
@@ -6,7 +5,6 @@ from fastapi import Depends
 from infra.redis.redis_api import RedisAPI
 
 
-@asynccontextmanager
 async def get_redis() -> AsyncIterator[RedisAPI]:
     redis_client = RedisAPI()
     try:

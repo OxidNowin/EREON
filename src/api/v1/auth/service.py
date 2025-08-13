@@ -7,23 +7,40 @@ from infra.postgres.models import User, Referral, Wallet, WalletCurrency
 
 class RegisterService(BaseService):
     USER_REDIS_SPACENAME: str = "user"
+    USER_LOGIN_REDIS_SPACENAME: str = "user_login"
+
+    USER_REDIS_EXPIRE = 3600
+    USER_LOGIN_REDIS_EXPIRE = 900
 
     async def exist(self, telegram_id: int) -> bool:
         key = f"{self.USER_REDIS_SPACENAME}:{telegram_id}"
-        if self.redis.exists(key):
+        if await self.redis.exists(key):
+            await self.redis.set(key, "", self.USER_REDIS_EXPIRE)
             return True
 
         user_exist = await self.uow.user.exists(telegram_id)
         if user_exist:
-            await self.redis.set(key, "", 3600)
+            await self.redis.set(key, "", self.USER_REDIS_EXPIRE)
             return True
+        return False
+
+    async def is_login(self, telegram_id: int) -> bool:
+        key = f"{self.USER_LOGIN_REDIS_SPACENAME}:{telegram_id}"
+        if await self.redis.exists(key):
+            await self.redis.set(key, "", self.USER_LOGIN_REDIS_EXPIRE)
+            return True
+
+        has_entry_code = await self.uow.user.has_entry_code(telegram_id)
+        if not has_entry_code:
+            return True
+
         return False
 
     async def register_user(self, telegram_id: int, referral_code: str | None = None) -> None:
         await self._create_user(telegram_id)
         await self._create_referral(telegram_id, referral_code)
         await self._create_wallet(telegram_id)
-        await self.redis.set(f"{self.USER_REDIS_SPACENAME}:{telegram_id}", "", 3600)
+        await self.redis.set(f"{self.USER_REDIS_SPACENAME}:{telegram_id}", "", self.USER_REDIS_EXPIRE)
 
     async def _create_user(self, telegram_id: int):
         await self.uow.user.add(User(telegram_id=telegram_id))
@@ -64,6 +81,19 @@ class RegisterService(BaseService):
 
 
 class LoginService(BaseService):
-    async def login_by_code(self, telegram_id: int, login_data: UserLogin) -> None:
-        if not await self.uow.user.check_user_code(telegram_id=telegram_id, entry_code=login_data.entry_code):
+    USER_LOGIN_REDIS_SPACENAME: str = "user_login"
+    USER_LOGIN_REDIS_EXPIRE = 900
+
+    async def login_by_code(self, login_data: UserLogin) -> None:
+        key = f"{self.USER_LOGIN_REDIS_SPACENAME}:{login_data.telegram_id}"
+        if await self.redis.exists(key):
+            await self.redis.set(key, "", self.USER_LOGIN_REDIS_EXPIRE)
+            return
+
+        checked = await self.uow.user.check_user_code(
+            telegram_id=login_data.telegram_id,
+            entry_code=login_data.entry_code
+        )
+        if not checked:
             raise
+        await self.redis.set(key, "", self.USER_LOGIN_REDIS_EXPIRE)

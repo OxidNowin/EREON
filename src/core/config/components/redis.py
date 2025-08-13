@@ -5,7 +5,6 @@ from core.config.constants import ENV_FILE_PATH
 
 
 class RedisConfig(BaseSettings):
-    redis_user: str = Field(default="redis")
     redis_password: str = Field(default="redis")
     redis_host: str = Field(default='localhost')
     redis_port: int = Field(default=6379)
@@ -18,4 +17,4 @@ class RedisConfig(BaseSettings):
 
     @computed_field(return_type=str)
     def REDIS_URL(self): # noqa
-        return f'redis://{self.redis_user}:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_db}'
+        return f'redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_db}'

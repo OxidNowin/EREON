@@ -6,4 +6,4 @@ class UserBase(BaseModel):
 
 
 class UserLogin(UserBase):
-    ...
+    telegram_id: int = Field(..., description="Telegram ID")
