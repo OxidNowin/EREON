@@ -1,3 +1,5 @@
+from enum import Enum as PyEnum
+
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -5,8 +7,14 @@ from sqlalchemy import (
     Text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql.sqltypes import Integer, Enum
 
 from infra.postgres.models.base import Base
+
+
+class ReferralType(PyEnum):
+    FIXED_INCOME = "FIXED_INCOME"
+    PERCENTAGE_INCOME = "PERCENTAGE_INCOME"
 
 
 class Referral(Base):
@@ -26,6 +34,13 @@ class Referral(Base):
     )
     code: Mapped[str] = mapped_column(Text, unique=True, nullable=False)
     active: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    type: Mapped[ReferralType | None] = mapped_column(
+        Enum(ReferralType, name="referral_type_enum", native_enum=False),
+        nullable=True,
+    )
+    referral_count: Mapped[int] = mapped_column(Integer, server_default="0")
+    balance: Mapped[int] = mapped_column(Integer, server_default="0")
+
 
     user: Mapped["User"] = relationship(
         "User",
