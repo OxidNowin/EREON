@@ -30,9 +30,13 @@ class AlfaClient:
         b2b_client_id=settings.alfa_b2b_client_id,
         partner_id=settings.alfa_partner_id
     )
+
     CERT_PATH = settings.alfa_rsa_cert_path
     PRIVATE_KEY_PATH = settings.alfa_rsa_private_key_path
 
+    PAYMENT_LINK_SEMAPHORE = asyncio.Semaphore(100)
+    PROCESS_PAYMENT_SEMAPHORE = asyncio.Semaphore(100)
+    PAYMENT_STATUS_SEMAPHORE = asyncio.Semaphore(100)
 
     def __init__(self, token_service: ITokenService[AlfaScope]):
         self._token_service = token_service
@@ -104,21 +108,22 @@ class AlfaClient:
             "Authorization": f"Bearer {token}",
             "Accept": "application/json"
         }
-        
-        session = self._get_session()
-        async with session.get(url, headers=headers) as resp:
-            if resp.status != 200:
-                try:
-                    error_data = await resp.json()
-                except Exception:
-                    error_data = {}
-                logger.error(
-                    "Ошибка получения данных платёжной ссылки %s: %s, %s",
-                    qrc_id, resp.status, error_data
-                )
-                raise AlfaApiError("Не удалось получить данные по платежной ссылке")
-            
-            response_data = await resp.json()
+
+        async with self.PAYMENT_LINK_SEMAPHORE:
+            session = self._get_session()
+            async with session.get(url, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        error_data = await resp.json()
+                    except Exception:
+                        error_data = {}
+                    logger.error(
+                        "Ошибка получения данных платёжной ссылки %s: %s, %s",
+                        qrc_id, resp.status, error_data
+                    )
+                    raise AlfaApiError("Не удалось получить данные по платежной ссылке")
+
+                response_data = await resp.json()
 
         payment_link_data = PaymentLinkData(**response_data)
 
@@ -153,25 +158,26 @@ class AlfaClient:
             "Content-Type": "application/json",
             "Accept": "application/json"
         }
-        
-        session = self._get_session()
-        async with session.post(
-            url=f"{settings.alfa_base_url}/api/sbp/jp/v1/outgoing-payments/one-pay",
-            json=payment_request.model_dump(by_alias=True), 
-            headers=headers
-        ) as resp:
-            if resp.status != 201:
-                try:
-                    error_data = await resp.json()
-                except Exception:
-                    error_data = {}
-                raise AlfaApiError(
-                    message=f"Ошибка выполнения исходящего платежа: {payment_link.qrc_id}",
-                    status_code=resp.status,
-                    response_data=error_data
-                )
-            
-            response_data = await resp.json()
+
+        async with self.PROCESS_PAYMENT_SEMAPHORE:
+            session = self._get_session()
+            async with session.post(
+                url=f"{settings.alfa_base_url}/api/sbp/jp/v1/outgoing-payments/one-pay",
+                json=payment_request.model_dump(by_alias=True),
+                headers=headers
+            ) as resp:
+                if resp.status != 201:
+                    try:
+                        error_data = await resp.json()
+                    except Exception:
+                        error_data = {}
+                    raise AlfaApiError(
+                        message=f"Ошибка выполнения исходящего платежа: {payment_link.qrc_id}",
+                        status_code=resp.status,
+                        response_data=error_data
+                    )
+
+                response_data = await resp.json()
         
         payment_response = PaymentResponse(**response_data)
 
@@ -193,21 +199,22 @@ class AlfaClient:
             "Authorization": f"Bearer {token}",
             "Accept": "application/json"
         }
-        
-        session = self._get_session()
-        async with session.get(url, params=params, headers=headers) as resp:
-            if resp.status != 200:
-                try:
-                    error_data = await resp.json()
-                except Exception:
-                    error_data = {}
-                logger.error(
-                    "Ошибка получения статуса исходящего платежа %s: %s, %s",
-                    payment_id, resp.status, error_data
-                )
-                return None
-            
-            response_data = await resp.json()
+
+        async with self.PROCESS_PAYMENT_SEMAPHORE:
+            session = self._get_session()
+            async with session.get(url, params=params, headers=headers) as resp:
+                if resp.status != 200:
+                    try:
+                        error_data = await resp.json()
+                    except Exception:
+                        error_data = {}
+                    logger.error(
+                        "Ошибка получения статуса исходящего платежа %s: %s, %s",
+                        payment_id, resp.status, error_data
+                    )
+                    return None
+
+                response_data = await resp.json()
 
         payment_response = PaymentStatusResponse(**response_data)
 

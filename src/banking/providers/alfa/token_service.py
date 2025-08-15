@@ -1,3 +1,5 @@
+import asyncio
+
 import aiohttp
 
 from banking.providers.alfa.schemas import AlfaScope
@@ -12,10 +14,13 @@ class AlfaTokenService:
     TOKEN_KEY_PREFIX = "alfa:access_token"
     TOKEN_EXPIRATION_SECONDS = 60 * 55  # 55 минут
     TOKEN_ENDPOINT = f"{settings.alfa_base_url}/oidc/token"
+
     headers = {
         "Content-Type": "application/x-www-form-urlencoded",
         "Accept": "application/json"
     }
+
+    SEMAPHORE = asyncio.Semaphore(100)
     
     def __init__(self, redis: RedisAPI):
         self._redis = redis
@@ -54,22 +59,23 @@ class AlfaTokenService:
             f"&client_secret={settings.alfa_client_secret}"
             f"&scope={scope.value}"
         )
-        
-        async with aiohttp.ClientSession() as session:
-            async with session.post(self.TOKEN_ENDPOINT, data=payload, headers=self.headers) as resp:
-                if resp.status != 200:
-                    try:
-                        error_data = await resp.json()
-                    except Exception:
-                        error_data = {}
-                    
-                    raise AlfaTokenError(
-                        message=f"Ошибка получения токена от Alfa Bank",
-                        status_code=resp.status,
-                        response_data=error_data
-                    )
-                
-                data = await resp.json()
+
+        async with self.SEMAPHORE:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(self.TOKEN_ENDPOINT, data=payload, headers=self.headers) as resp:
+                    if resp.status != 200:
+                        try:
+                            error_data = await resp.json()
+                        except Exception:
+                            error_data = {}
+
+                        raise AlfaTokenError(
+                            message=f"Ошибка получения токена от Alfa Bank",
+                            status_code=resp.status,
+                            response_data=error_data
+                        )
+
+                    data = await resp.json()
         return data["access_token"]
     
     async def _cache_token(self, scope: AlfaScope, token: str) -> None:
