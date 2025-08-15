@@ -7,9 +7,7 @@ from banking.abstractions import ITokenService, IBankPaymentClient
 from banking.providers.alfa import AlfaClient, AlfaTokenService, AlfaScope
 
 
-def get_alfa_token_service(
-    redis=RedisDep,
-) -> ITokenService[AlfaScope]:
+def get_alfa_token_service(redis: RedisDep) -> ITokenService[AlfaScope]:
     """Получить сервис управления токенами Alfa Bank"""
     return AlfaTokenService(redis=redis)
 

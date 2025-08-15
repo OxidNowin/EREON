@@ -1,4 +1,5 @@
 from uuid import UUID
+from datetime import datetime
 from decimal import Decimal
 from pydantic import BaseModel, Field, field_validator, HttpUrl
 
@@ -37,7 +38,6 @@ class SbpPaymentResponse(BaseModel):
     crypto_amount: Decimal = Field(..., description="Сумма в криптовалюте")
     fee_crypto: Decimal = Field(..., description="Комиссия в криптовалюте")
     total_amount_crypto: Decimal = Field(..., description="Общая сумма в криптовалюте")
-    currency: str = Field(..., description="Валюта")
     exchange: Decimal = Field(..., description="Курс обмена")
     status: str = Field(..., description="Статус платежа")
-    created_at: str = Field(..., description="Дата создания")
+    created_at: datetime = Field(..., description="Дата создания")
