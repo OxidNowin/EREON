@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from uuid import UUID
 from decimal import Decimal
 from enum import Enum as PyEnum
@@ -9,6 +10,9 @@ from sqlalchemy.sql.sqltypes import Enum
 
 from infra.postgres.models.base import Base
 from infra.postgres.mixins import CreateTimestampMixin
+
+if TYPE_CHECKING:
+    from infra.postgres.models.operation import Operation # noqa: F401
 
 
 class SbpPaymentStatus(PyEnum):

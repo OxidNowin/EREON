@@ -1,5 +1,6 @@
 from enum import Enum as PyEnum
 from decimal import Decimal
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
@@ -15,6 +16,10 @@ from sqlalchemy.sql.sqltypes import ARRAY, String, DECIMAL
 
 from infra.postgres.models.base import Base
 from infra.postgres.mixins import CreateUpdateTimestampMixin
+
+if TYPE_CHECKING:
+    from infra.postgres.models.user import User # noqa: F401
+    from infra.postgres.models.operation import Operation # noqa: F401
 
 
 class WalletCurrency(str, PyEnum):

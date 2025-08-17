@@ -1,8 +1,14 @@
+from typing import TYPE_CHECKING
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import BigInteger, Boolean, Text, CHAR
 
 from infra.postgres.models.base import Base
 from infra.postgres.mixins import CreateTimestampMixin
+
+if TYPE_CHECKING:
+    from infra.postgres.models.wallet import Wallet # noqa: F401
+    from infra.postgres.models.referral import Referral # noqa: F401
 
 
 class User(Base, CreateTimestampMixin):

@@ -147,6 +147,7 @@ class AlfaClient:
             payment_purpose=payment_link.payment_purpose,
             take_tax=payment_link.take_tax,
             tax_amount=payment_link.tax_amount,
+            digest_signatures=[]
         )
         
         digest = self._create_digest(payment_request)

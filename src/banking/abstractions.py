@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Protocol, TypeVar
 
 # TypeVar для scope'ов разных банков
-ScopeType = TypeVar('ScopeType')
+ScopeType = TypeVar('ScopeType', contravariant=True)
 
 
 @dataclass

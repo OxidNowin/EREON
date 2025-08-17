@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from enum import Enum as PyEnum
 
 from sqlalchemy import (
@@ -10,6 +11,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql.sqltypes import Integer, Enum
 
 from infra.postgres.models.base import Base
+
+if TYPE_CHECKING:
+    from infra.postgres.models.user import User # noqa: F401
 
 
 class ReferralType(PyEnum):
