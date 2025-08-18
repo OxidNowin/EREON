@@ -3,6 +3,7 @@ from uuid import UUID
 
 from api.v1.base.service import BaseService
 from api.v1.wallet.schemas import WalletCurrencyList, WithdrawRequest
+from crypto_processing.network import matcher
 from infra.postgres.models import WalletCurrency, Wallet, Operation, OperationStatus, OperationType
 
 
@@ -21,37 +22,41 @@ class WalletService(BaseService):
             raise
         return wallets
 
-    async def withdraw_funds(self, wallet_id: UUID, data: WithdrawRequest) -> Wallet:
-        wallet = await self.uow.wallet.get_wallet_by_id_for_update(wallet_id)
+    async def withdraw_funds(self, wallet_id: UUID, user_id: UUID, data: WithdrawRequest) -> Operation:
+        wallet = await self.uow.wallet.get_wallet_by_id_for_update(wallet_id, user_id)
         if not wallet:
             raise
 
-        amount = int(data.amount * 1_000_000)
-        decimal_amount = Decimal(amount / 1_000_000)
+        fee = matcher.get_network_fee(data.address)
+        if not fee:
+            raise
 
-        if wallet.balance < decimal_amount:
+        amount = int((data.amount + fee) * 1_000_000)
+        total_decimal_amount = Decimal(amount / 1_000_000)
+
+        if wallet.balance < total_decimal_amount:
             raise
 
         withdraw_accepted = await self.crypto_processing_client.withdraw_funds(
             address=data.address,
             amount=amount
         )
-        if not withdraw_accepted:
-            raise
 
-        await self.uow.operation.add(
-            Operation(
-                wallet_id=wallet_id,
-                status=OperationStatus.CONFIRMED,
-                operation_type=OperationType.WITHDRAW,
-                amount=decimal_amount,
-                fee=Decimal(0),
-                total_amount=decimal_amount,
-            )
+        operation = Operation(
+            wallet_id=wallet_id,
+            status=OperationStatus.CONFIRMED,
+            operation_type=OperationType.WITHDRAW,
+            amount=data.amount,
+            fee=fee,
+            total_amount=total_decimal_amount,
         )
+        await self.uow.operation.add(operation)
+        if not withdraw_accepted:
+            operation.status = OperationStatus.CANCELLED
+            return operation
 
-        wallet.balance -= decimal_amount
-        return wallet
+        wallet.balance -= total_decimal_amount
+        return operation
 
     @classmethod
     def get_currencies(cls) -> WalletCurrencyList:

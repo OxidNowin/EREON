@@ -2,6 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter
 
+from api.v1.operation.schemas import OperationBase
 from api.v1.wallet.dependencies import WalletServiceDep
 from api.v1.wallet.schemas import WalletResponse, WalletCurrencyList, WithdrawRequest
 from api.v1.auth.dependencies import UserAuthDep
@@ -31,11 +32,11 @@ async def get_wallet(
     return await wallet_service.get_wallet(wallet_id)
 
 
-@router.post("/{wallet_id}/withdrawal", response_model=WalletResponse)
+@router.post("/{wallet_id}/withdrawal", response_model=OperationBase)
 async def withdraw_funds(
         wallet_id: UUID,
         data: WithdrawRequest,
         user: UserAuthDep,
         wallet_service: WalletServiceDep
 ):
-    return await wallet_service.withdraw_funds(wallet_id, data)
+    return await wallet_service.withdraw_funds(wallet_id, user.id, data)
