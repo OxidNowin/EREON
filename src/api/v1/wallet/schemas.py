@@ -33,3 +33,8 @@ class WalletResponse(BaseModel):
 
 class WalletCurrencyList(BaseModel):
     currencies: list[str]
+
+
+class WithdrawRequest(BaseModel):
+    address: str
+    amount: Decimal

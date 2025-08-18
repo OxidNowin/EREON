@@ -54,3 +54,11 @@ class CryptoProcessingClient:
         payload = {"webhookAddress": webhook_url}
         raw = await self._request("POST", "/webhook", json=payload)
         return WebhookRegistrationResponse.model_validate(raw)
+
+    async def withdraw_funds(self, address: str, amount: int) -> bool:
+        payload = {"amount": amount, "address": address}
+        try:
+            raw = await self._request("POST", "/withdrawal", json=payload)
+        except Exception:
+            return False
+        return True
