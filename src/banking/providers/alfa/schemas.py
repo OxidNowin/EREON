@@ -109,7 +109,7 @@ class PaymentLinkData(BaseModel):
     brand_name: str = Field(..., description="Название бренда")
     payee_account: str | None = Field(None, description="Счёт получателя")
     merchant_id: str = Field(..., description="Идентификатор мерчанта")
-    amount: int | None = Field(None, description="Сумма платежа (в копейках)")
+    amount: int = Field(..., description="Сумма платежа (в копейках)")
     payment_purpose: str = Field(" ", description="Назначение платежа")
     address: str = Field(..., description="Адрес")
     mcc: str = Field(..., description="Код категории мерчанта")

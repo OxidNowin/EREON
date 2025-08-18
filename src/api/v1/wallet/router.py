@@ -18,7 +18,7 @@ def get_currencies(wallet_service: WalletServiceDep) -> WalletCurrencyList:
 async def get_all_wallets(
     user: UserAuthDep,
     wallet_service: WalletServiceDep
-) -> list[WalletResponse]:
+):
     return await wallet_service.get_wallets(user.id)
 
 
@@ -27,5 +27,5 @@ async def get_wallet(
         user: UserAuthDep,
         wallet_id: UUID,
         wallet_service: WalletServiceDep
-) -> WalletResponse:
+):
     return await wallet_service.get_wallet(wallet_id)

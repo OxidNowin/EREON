@@ -16,7 +16,7 @@ async def get_user_operations_handler(
     user: UserAuthDep,
     params: PaginationDep,
     service: OperationServiceDep,
-) -> list[OperationBase]:
+):
     return await service.get_operations_by_user(
         telegram_id=user.id,
         params=params
@@ -29,7 +29,7 @@ async def get_wallet_operations_handler(
     wallet_id: UUID,
     params: PaginationDep,
     service: OperationServiceDep,
-) -> list[OperationBase]:
+):
     return await service.get_operations_by_wallet(
         wallet_id=wallet_id,
         params=params
