@@ -1,5 +1,6 @@
 from decimal import Decimal
 from enum import Enum as PyEnum
+from uuid import UUID
 
 from sqlalchemy import (
     BigInteger,
@@ -28,7 +29,7 @@ class ReferralOperationStatus(PyEnum):
 class ReferralOperation(Base, CreateUpdateTimestampMixin):
     __tablename__ = "referral_operation"
 
-    referral_operation_id: Mapped[int] = mapped_column(
+    referral_operation_id: Mapped[UUID] = mapped_column(
         PGUUID(as_uuid=True),
         primary_key=True,
         server_default=text("gen_random_uuid()"),

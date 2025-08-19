@@ -1,6 +1,6 @@
 from uuid import UUID
 from typing import Sequence
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 
 from infra.postgres.models import ReferralOperation, Referral
 from infra.postgres.storage.base_storage import PostgresStorage
@@ -55,3 +55,10 @@ class ReferralOperationStorage(PostgresStorage[ReferralOperation]):
         )
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none() is not None
+
+    async def count_referral_operations(self, referral_id: int) -> int:
+        stmt = select(func.count(self.model_cls.referral_operation_id)).where(
+            self.model_cls.referral_id == referral_id
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar() or 0

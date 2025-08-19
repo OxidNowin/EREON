@@ -4,6 +4,7 @@ from api.v1.wallet.router import router as wallet_router
 from api.v1.webhook.router import router as webhook_router
 from api.v1.operation.router import router as operation_router
 from api.v1.payment.router import router as payment_router
+from api.v1.referral.router import router as referral_router
 
 
 __all__ = [
@@ -13,4 +14,5 @@ __all__ = [
     'webhook_router',
     'operation_router',
     'payment_router',
+    'referral_router',
 ]
