@@ -10,6 +10,7 @@ from infra.postgres.storage.wallet import WalletStorage
 from infra.postgres.storage.operation import OperationStorage
 from infra.postgres.storage.cryptocurrency_replenishment import CryptocurrencyReplenishmentStorage
 from infra.postgres.storage.sbp_payment import SbpPaymentStorage
+from infra.postgres.storage.referral_operation import ReferralOperationStorage
 
 
 class PostgresUnitOfWork:
@@ -25,6 +26,7 @@ class PostgresUnitOfWork:
         self.operation = OperationStorage(db)
         self.cryptocurrency_replenishment = CryptocurrencyReplenishmentStorage(db)
         self.sbp_payment = SbpPaymentStorage(db)
+        self.referral_operation = ReferralOperationStorage(db)
 
 
 async def get_uow() -> AsyncIterator[PostgresUnitOfWork]:
