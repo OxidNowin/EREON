@@ -23,7 +23,7 @@ from utils import from_dict
 
 # Отключаем предупреждения о небезопасных SSL соединениях
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-os.makedirs("/certs", exist_ok=True)
+os.makedirs("certs", exist_ok=True)
 
 load_dotenv()
 

@@ -58,6 +58,7 @@ class DigestSignature(BaseModel):
             'poa_number': 'poaNumber',
         }.get(field_name, field_name)
         populate_by_name = True
+        use_enum_values = True
 
 
 class PaymentRequest(BaseModel):

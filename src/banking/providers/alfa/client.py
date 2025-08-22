@@ -89,7 +89,7 @@ class AlfaClient:
 
     async def _create_signature(self, digest: str) -> DigestSignature:
         """
-        Создать фейковую подпись для тестирования.
+        Создать подпись для тестирования.
         """
         base64_encoded = await self.sign_pkcs7_detached(digest)
         
@@ -261,6 +261,7 @@ class AlfaClient:
             stdout, stderr = await process.communicate()
 
             if process.returncode != 0:
+                print(stderr.decode(), flush=True)
                 raise AlfaRsaSignatureError()
 
             # Читаем результат и кодируем в base64

@@ -18,9 +18,9 @@ class AlfaApiConfig(BaseSettings):
     alfa_rsa_cert_path: str = Field(default="certs/sandbox_private_key.pem", description="Сертификат RSA")
     alfa_rsa_private_key_path: str = Field(default="certs/sandbox_decrypted_private.key", description="Закрытый ключ при помощи которого был создан сертификат")
 
-    alfa_tsl_cert_path: str = Field(default="certs/sandbox_cert_2025.cer", description="Сертификат для mTLS подключения")
-    alfa_tsl_private_key_path: str = Field(default="certs/sandbox_key_2025_decrypted.key", description="Приватный ключ")
-    alfa_tsl_enable: bool = Field(default=False, description="Включить установку mTLS соединения")
+    alfa_tls_cert_path: str = Field(default="certs/sandbox_cert_2025.cer", description="Сертификат для mTLS подключения")
+    alfa_tls_private_key_path: str = Field(default="certs/sandbox_key_2025_decrypted.key", description="Приватный ключ")
+    alfa_tls_enable: bool = Field(default=False, description="Включить установку mTLS соединения")
 
     model_config = SettingsConfigDict(
         env_file=ENV_FILE_PATH,

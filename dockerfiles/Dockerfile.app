@@ -10,6 +10,7 @@ RUN mkdir -p $PROMETHEUS_MULTIPROC_DIR
 WORKDIR /app
 
 COPY alembic.ini .
+COPY certs/ certs/
 COPY migrations/ migrations/
 COPY src/ .
 
