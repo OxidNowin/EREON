@@ -203,7 +203,7 @@ class AlfaClient:
             "Accept": "application/json"
         }
 
-        async with self.PROCESS_PAYMENT_SEMAPHORE:
+        async with self.PAYMENT_STATUS_SEMAPHORE:
             session = self._get_session()
             async with session.get(url, params=params, headers=headers, ssl=ssl_context) as resp:
                 if resp.status != 200:
