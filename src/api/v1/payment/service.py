@@ -1,11 +1,15 @@
+import asyncio
 import time
 from decimal import Decimal
 from uuid import UUID
+from logging import getLogger
 
 from api.v1.base.service import BaseService
 from api.v1.payment.schemas import SbpPaymentCreate
-from banking.providers.alfa import PaymentStatus
+from banking.providers.alfa import PaymentStatus, AlfaApiError
 from infra.postgres.models import Operation, OperationStatus, OperationType, SbpPayment, SbpPaymentStatus
+
+logger = getLogger(__name__)
 
 
 class PaymentService(BaseService):
@@ -33,7 +37,11 @@ class PaymentService(BaseService):
         if wallet.balance < crypto_amount:
             raise
 
-        payment_result = await self.bank_client.process_payment(payment_link_data)
+        try:
+            payment_result = await self.bank_client.process_payment(payment_link_data)
+        except AlfaApiError as e:
+            logger.error(e)
+            raise
 
         # TODO add our commission
         crypto_fee = (Decimal(payment_result.commission) / 100) / Decimal(payment_data.exchange)
@@ -92,7 +100,11 @@ class PaymentService(BaseService):
         now = time.perf_counter()
 
         while time.perf_counter() - now < self.TIME_TO_CHECK:
-            payment_status = await self.bank_client.get_payment_status(payment_id)
+            try:
+                payment_status = await self.bank_client.get_payment_status(payment_id)
+            except Exception as e:
+                logger.error(e)
+                payment_status = None
 
             if payment_status is None:
                 continue
@@ -102,5 +114,7 @@ class PaymentService(BaseService):
 
             if payment_status.status == PaymentStatus.COMPLETE.value:
                 return True
+
+            await asyncio.sleep(0.5)
 
         return False
