@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 
 from banking.providers.alfa.schemas import AlfaScope
+from banking.providers.alfa.utils import ssl_context
 from core.config import settings
 from infra.redis.redis_api import RedisAPI
 from banking.providers.alfa.exceptions import AlfaTokenError
@@ -62,7 +63,12 @@ class AlfaTokenService:
 
         async with self.SEMAPHORE:
             async with aiohttp.ClientSession() as session:
-                async with session.post(self.TOKEN_ENDPOINT, data=payload, headers=self.headers) as resp:
+                async with session.post(
+                        self.TOKEN_ENDPOINT,
+                        data=payload,
+                        headers=self.headers,
+                        ssl=ssl_context
+                ) as resp:
                     if resp.status != 200:
                         try:
                             error_data = await resp.json()
@@ -106,4 +112,4 @@ class AlfaTokenService:
         # Удаляем все токены из Redis
         for scope in AlfaScope:
             token_key = self._get_token_key(scope)
-            await self._redis.delete(token_key) 
+            await self._redis.delete(token_key)

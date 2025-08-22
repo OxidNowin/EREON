@@ -6,6 +6,7 @@ from pathlib import Path
 
 import aiohttp
 
+from banking.providers.alfa.utils import ssl_context
 from core.config import settings
 from banking.abstractions import ITokenService, PaymentResult, PaymentStatus, PaymentLink
 from banking.providers.alfa.exceptions import AlfaApiError, AlfaRsaSignatureError
@@ -111,7 +112,7 @@ class AlfaClient:
 
         async with self.PAYMENT_LINK_SEMAPHORE:
             session = self._get_session()
-            async with session.get(url, headers=headers) as resp:
+            async with session.get(url, headers=headers, ssl=ssl_context) as resp:
                 if resp.status != 200:
                     try:
                         error_data = await resp.json()
@@ -165,7 +166,8 @@ class AlfaClient:
             async with session.post(
                 url=f"{settings.alfa_base_url}/api/sbp/jp/v1/outgoing-payments/one-pay",
                 json=payment_request.model_dump(by_alias=True),
-                headers=headers
+                headers=headers,
+                ssl=ssl_context
             ) as resp:
                 if resp.status != 201:
                     try:
@@ -203,7 +205,7 @@ class AlfaClient:
 
         async with self.PROCESS_PAYMENT_SEMAPHORE:
             session = self._get_session()
-            async with session.get(url, params=params, headers=headers) as resp:
+            async with session.get(url, params=params, headers=headers, ssl=ssl_context) as resp:
                 if resp.status != 200:
                     try:
                         error_data = await resp.json()
