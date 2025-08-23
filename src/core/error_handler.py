@@ -8,6 +8,7 @@ from api.v1.payment.exceptions import PaymentProcessingError, PaymentLinkError
 from api.v1.user.exceptions import EntryCodeUpdateError
 from api.v1.auth.exceptions import InvalidEntryCodeError
 from api.v1.webhook.exceptions import TransactionAlreadyExistsError
+from api.v1.referral.exceptions import ReferralNotFoundError, ReferralTypeAlreadySetError, ReferralUpdateError
 from banking.exceptions import BankApiError, BankTokenError
 from banking.providers.alfa.exceptions import AlfaTokenError, AlfaApiError, AlfaRsaSignatureError
 
@@ -118,6 +119,45 @@ async def transaction_exists_handler(request: Request, exc: TransactionAlreadyEx
     )
 
 
+async def referral_not_found_handler(request: Request, exc: ReferralNotFoundError) -> JSONResponse:
+    """Обработчик для ошибок: реферал не найден"""
+    logger.error(f"Referral not found error: {exc.message}", extra={"path": request.url.path})
+    
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": exc.message,
+            "type": exc.__class__.__name__
+        }
+    )
+
+
+async def referral_type_already_set_handler(request: Request, exc: ReferralTypeAlreadySetError) -> JSONResponse:
+    """Обработчик для ошибок: тип реферальной программы уже установлен"""
+    logger.error(f"Referral type already set error: {exc.message}", extra={"path": request.url.path})
+    
+    return JSONResponse(
+        status_code=409,
+        content={
+            "error": exc.message,
+            "type": exc.__class__.__name__
+        }
+    )
+
+
+async def referral_update_handler(request: Request, exc: ReferralUpdateError) -> JSONResponse:
+    """Обработчик для ошибок обновления реферальной программы"""
+    logger.error(f"Referral update error: {exc.message}", extra={"path": request.url.path})
+    
+    return JSONResponse(
+        status_code=400,
+        content={
+            "error": exc.message,
+            "type": exc.__class__.__name__
+        }
+    )
+
+
 async def bank_exception_handler(request: Request, exc: BankApiError) -> JSONResponse:
     """Обработчик для банковских исключений"""
     logger.error(f"Bank API error: {exc.message}", extra={
@@ -211,6 +251,9 @@ def register_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(EntryCodeUpdateError, entry_code_update_handler)
     app.add_exception_handler(InvalidEntryCodeError, invalid_entry_code_handler)
     app.add_exception_handler(TransactionAlreadyExistsError, transaction_exists_handler)
+    app.add_exception_handler(ReferralNotFoundError, referral_not_found_handler)
+    app.add_exception_handler(ReferralTypeAlreadySetError, referral_type_already_set_handler)
+    app.add_exception_handler(ReferralUpdateError, referral_update_handler)
     
     # Банковские исключения
     app.add_exception_handler(BankApiError, bank_exception_handler)

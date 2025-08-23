@@ -1,25 +1,26 @@
 from api.v1.base.service import BaseService
 from api.v1.referral.schemas import ReferralInfo, ReferralOperationInfo, ReferralOperationsResponse
 from infra.postgres.models import ReferralType
+from api.v1.referral.exceptions import ReferralNotFoundError, ReferralTypeAlreadySetError, ReferralUpdateError
 
 
 class ReferralService(BaseService):
     async def set_referral_type(self, telegram_id: int, referral_type: ReferralType) -> None:
         existing_referral = await self.uow.referral.get_by_id(telegram_id)
         if not existing_referral:
-            raise ValueError("Реферал не найден")
+            raise ReferralNotFoundError("Реферал не найден")
         
         if existing_referral.type is not None:
-            raise ValueError("Тип реферальной программы уже установлен и не может быть изменен")
+            raise ReferralTypeAlreadySetError("Тип реферальной программы уже установлен и не может быть изменен")
         
         updated = await self.uow.referral.update(telegram_id, type=referral_type)
         if not updated:
-            raise ValueError("Не удалось обновить тип реферальной программы")
+            raise ReferralUpdateError("Не удалось обновить тип реферальной программы")
 
     async def get_referral_info(self, telegram_id: int) -> ReferralInfo:
         referral = await self.uow.referral.get_by_id(telegram_id)
         if not referral:
-            raise ValueError("Реферал не найден")
+            raise ReferralNotFoundError("Реферал не найден")
         
         referred_users = await self.uow.referral.get_referred_users(telegram_id)
         referred_user_ids = [user.telegram_id for user in referred_users]
@@ -43,7 +44,7 @@ class ReferralService(BaseService):
     ) -> ReferralOperationsResponse:
         referral = await self.uow.referral.get_by_id(telegram_id)
         if not referral:
-            raise ValueError("Реферал не найден")
+            raise ReferralNotFoundError("Реферал не найден")
         
         operations = await self.uow.referral_operation.get_referral_operations(
             telegram_id, limit=limit, offset=offset

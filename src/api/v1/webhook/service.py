@@ -3,6 +3,7 @@ from api.v1.webhook.schemas import CryptocurrencyReplenishmentCreate
 from infra.postgres.models import CryptocurrencyReplenishment, Operation, OperationStatus, OperationType
 from crypto_processing.network import matcher
 from api.v1.webhook.exceptions import TransactionAlreadyExistsError
+from api.v1.wallet.exceptions import WalletNotFoundError
 
 
 class WebhookService(BaseService):
@@ -13,7 +14,7 @@ class WebhookService(BaseService):
 
         wallet = await self.uow.wallet.get_wallet_by_address_for_update(webhook_data.to_address)
         if not wallet:
-            raise ValueError("Wallet not found")
+            raise WalletNotFoundError(f"Wallet with address {webhook_data.to_address} is not found")
 
         fee = matcher.get_network_fee(webhook_data.to_address)
         net_amount = webhook_data.amount - fee
