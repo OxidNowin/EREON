@@ -9,7 +9,7 @@ import aiohttp
 from banking.providers.alfa.utils import ssl_context
 from core.config import settings
 from banking.abstractions import ITokenService, PaymentResult, PaymentStatus, PaymentLink
-from banking.providers.alfa.exceptions import AlfaApiError, AlfaRsaSignatureError
+from banking.providers.alfa.exceptions import AlfaApiError, AlfaRsaSignatureError, AlfaTokenError
 from banking.providers.alfa.schemas import (
     PaymentLinkData, 
     PaymentStatusResponse,
@@ -102,7 +102,11 @@ class AlfaClient:
 
     async def get_payment_link_data(self, qrc_id: str) -> PaymentLink:
         """Получить данные по зарегистрированной платёжной ссылке"""
-        token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
+        try:
+            token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
+        except AlfaTokenError as e:
+            logger.error(e)
+            raise AlfaApiError("Не удалось получить доступ к API Alfa Bank")
         
         url = f"{settings.alfa_base_url}/api/sbp/jp/v1/payment-urls/{qrc_id}/data"
         headers = {
@@ -138,7 +142,11 @@ class AlfaClient:
 
     async def process_payment(self, payment_link: PaymentLink) -> PaymentResult:
         """Обработать платеж по QR-коду"""
-        token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
+        try:
+            token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
+        except AlfaTokenError as e:
+            logger.error(e)
+            raise AlfaApiError("Не удалось получить доступ к API Alfa Bank")
     
         payment_request = PaymentRequest(
             client=self.client_info,
@@ -174,6 +182,10 @@ class AlfaClient:
                         error_data = await resp.json()
                     except Exception:
                         error_data = {}
+                    logger.error(
+                        "Ошибка выполнения исходящего платежа:",
+                        payment_request.qrc_id, resp.status, error_data
+                    )
                     raise AlfaApiError(
                         message=f"Ошибка выполнения исходящего платежа: {payment_link.qrc_id}",
                         status_code=resp.status,
@@ -194,7 +206,11 @@ class AlfaClient:
     async def get_payment_status(self, payment_id: str) -> PaymentStatus | None:
         """Получить статус исходящего платежа"""
         
-        token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
+        try:
+            token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
+        except AlfaTokenError as e:
+            logger.error(e)
+            raise AlfaApiError("Не удалось получить доступ к API Alfa Bank")
         
         url = f"{settings.alfa_base_url}/api/sbp/jp/v1/outgoing-payments/{payment_id}/status"
         params = {"b2bClientId": settings.alfa_b2b_client_id}

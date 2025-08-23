@@ -8,6 +8,8 @@ from api.v1.base.service import BaseService
 from api.v1.payment.schemas import SbpPaymentCreate
 from banking.providers.alfa import PaymentStatus, AlfaApiError
 from infra.postgres.models import Operation, OperationStatus, OperationType, SbpPayment, SbpPaymentStatus
+from api.v1.payment.exceptions import PaymentProcessingError, PaymentLinkError
+from api.v1.wallet.exceptions import WalletNotFoundError, InsufficientFundsError
 
 logger = getLogger(__name__)
 
@@ -28,20 +30,22 @@ class PaymentService(BaseService):
     ) -> SbpPayment:
         wallet = await self.uow.wallet.get_wallet_by_id_for_update(wallet_id, user_id)
         if not wallet:
-            raise
+            raise WalletNotFoundError(f"Wallet with id {wallet_id} not found for user {user_id}")
 
-        payment_link_data = await self.bank_client.get_payment_link_data(payment_data.get_qr_id())
+        try:
+            payment_link_data = await self.bank_client.get_payment_link_data(payment_data.get_qr_id())
+        except AlfaApiError:
+            raise PaymentLinkError(f"Getting payment link failed")
 
         crypto_amount = (Decimal(payment_link_data.amount) / 100) / Decimal(payment_data.exchange)
 
         if wallet.balance < crypto_amount:
-            raise
+            raise InsufficientFundsError(f"Insufficient funds. Required: {crypto_amount}, available: {wallet.balance}")
 
         try:
             payment_result = await self.bank_client.process_payment(payment_link_data)
-        except AlfaApiError as e:
-            logger.error(e)
-            raise
+        except AlfaApiError:
+            raise PaymentProcessingError(f"Payment processing failed")
 
         # TODO add our commission
         crypto_fee = (Decimal(payment_result.commission) / 100) / Decimal(payment_data.exchange)

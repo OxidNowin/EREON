@@ -2,13 +2,14 @@ from api.v1.base.service import BaseService
 from api.v1.webhook.schemas import CryptocurrencyReplenishmentCreate
 from infra.postgres.models import CryptocurrencyReplenishment, Operation, OperationStatus, OperationType
 from crypto_processing.network import matcher
+from api.v1.webhook.exceptions import TransactionAlreadyExistsError
 
 
 class WebhookService(BaseService):
     async def add_balance(self, webhook_data: CryptocurrencyReplenishmentCreate):
         transaction = await self.uow.cryptocurrency_replenishment.get_by_id(webhook_data.tx_id)
         if transaction is not None:
-            raise
+            raise TransactionAlreadyExistsError(f"Transaction with tx_id {webhook_data.tx_id} already exists")
 
         wallet = await self.uow.wallet.get_wallet_by_address_for_update(webhook_data.to_address)
         if not wallet:

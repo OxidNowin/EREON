@@ -3,6 +3,7 @@ from uuid import uuid4
 from api.v1.base.service import BaseService
 from api.v1.auth.schemas import UserLogin
 from infra.postgres.models import User, Referral, Wallet, WalletCurrency
+from api.v1.auth.exceptions import InvalidEntryCodeError
 
 
 class RegisterService(BaseService):
@@ -95,5 +96,5 @@ class LoginService(BaseService):
             entry_code=login_data.entry_code
         )
         if not checked:
-            raise
+            raise InvalidEntryCodeError(f"Invalid entry code for user with telegram_id {login_data.telegram_id}")
         await self.redis.set(key, "", self.USER_LOGIN_REDIS_EXPIRE)

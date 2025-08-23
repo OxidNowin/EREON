@@ -8,7 +8,6 @@ class SbpPaymentCreate(BaseModel):
     sbp_url: HttpUrl = Field(..., description="URL для SBP платежа")
     exchange: Decimal = Field(..., description="Курс обмена")
 
-    @classmethod
     @field_validator('sbp_url', mode='after')
     def validate_sbp_url(cls, v: HttpUrl) -> HttpUrl:
         if v.host != 'qr.nspk.ru':

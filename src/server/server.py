@@ -7,6 +7,7 @@ from prometheus_fastapi_instrumentator import Instrumentator
 
 from core.config import settings
 from core.logging_config import setup_logging
+from core.error_handler import register_exception_handlers
 
 
 def _init_router(_app: FastAPI) -> None:
@@ -60,6 +61,7 @@ def create_app() -> FastAPI:
     _init_router(_app)
     _init_middleware(_app)
     _init_prometheus(_app)
+    register_exception_handlers(_app)
     return _app
 
 
