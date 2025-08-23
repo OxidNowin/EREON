@@ -5,8 +5,19 @@ from pydantic import BaseModel, Field, field_validator, HttpUrl
 
 
 class SbpPaymentCreate(BaseModel):
-    sbp_url: HttpUrl = Field(..., description="URL для SBP платежа")
-    exchange: Decimal = Field(..., description="Курс обмена")
+    sbp_url: HttpUrl = Field(
+        ..., 
+        description="URL для SBP платежа",
+        examples=[
+            "https://qr.nspk.ru/12345678901234567890123456789012",
+            "https://qr.nspk.ru/ABCDEFGHIJKLMNOPQRSTUVWXYZ123456"
+        ]
+    )
+    exchange: Decimal = Field(
+        ..., 
+        description="Курс обмена (рубли за единицу криптовалюты)",
+        examples=[100000, 50000, 75000]
+    )
 
     @field_validator('sbp_url', mode='after')
     def validate_sbp_url(cls, v: HttpUrl) -> HttpUrl:

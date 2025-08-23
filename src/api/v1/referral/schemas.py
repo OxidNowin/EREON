@@ -6,7 +6,11 @@ from infra.postgres.models import ReferralType, ReferralOperationType, ReferralO
 
 
 class ReferralTypeSet(BaseModel):
-    referral_type: ReferralType = Field(..., description="Тип реферальной программы")
+    referral_type: ReferralType = Field(
+        ..., 
+        description="Тип реферальной программы",
+        examples=["FIXED_INCOME", "PERCENTAGE_INCOME"]
+    )
 
 
 class ReferralInfo(BaseModel):

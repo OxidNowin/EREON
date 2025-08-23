@@ -1,22 +1,22 @@
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator, Field
 
 from infra.postgres.models import WalletCurrency
 from crypto_processing.network import matcher
 
 
 class Address(BaseModel):
-    network: str
-    address: str
+    network: str = Field(..., description="Название сети криптовалюты", examples=["TRC20"])
+    address: str = Field(..., description="Адрес кошелька в указанной сети", examples=["TQn9Y2khDD95J42FQtQTdwVVRqQjKCz9JQ"])
 
 
 class WalletResponse(BaseModel):
-    wallet_id: UUID
-    currency: WalletCurrency
-    balance: Decimal
-    addresses: list[Address]
+    wallet_id: UUID = Field(..., description="Уникальный идентификатор кошелька")
+    currency: WalletCurrency = Field(..., description="Тип криптовалюты кошелька", examples=["USDT"])
+    balance: Decimal = Field(..., description="Текущий баланс кошелька в основной валюте")
+    addresses: list[Address] = Field(..., description="Список адресов для пополнения кошелька")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -32,9 +32,9 @@ class WalletResponse(BaseModel):
 
 
 class WalletCurrencyList(BaseModel):
-    currencies: list[str]
+    currencies: list[str] = Field(..., description="Список поддерживаемых криптовалют")
 
 
 class WithdrawRequest(BaseModel):
-    address: str
-    amount: Decimal
+    address: str = Field(..., description="Адрес для вывода средств (автоматически определяется сеть)", examples=["TQn9Y2khDD95J42FQtQTdwVVRqQjKCz9JQ"])
+    amount: Decimal = Field(..., description="Сумма для вывода в основной валюте кошелька", examples=["100.00", "50.50", "1000.00"])
