@@ -1,10 +1,69 @@
 from fastapi import APIRouter, status
 
-from api.v1.user.schemas import UserChangeCode
+from api.v1.user.schemas import UserChangeCode, UserSetCode
 from api.v1.user.dependencies import UserServiceDep
 from api.v1.auth.dependencies import UserAuthDep
 
 router = APIRouter(prefix="/user", tags=["User"])
+
+
+@router.post(
+    "/entry_code",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Установить код входа",
+    responses={
+        202: {
+            "description": "Код входа успешно изменен",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Код входа успешно обновлен"
+                    }
+                }
+            }
+        },
+        400: {
+            "description": "Ошибка обновления кода входа",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "Failed to set entry code. Code already exists.",
+                        "type": "EntryCodeUpdateError"
+                    }
+                }
+            }
+        },
+        422: {
+            "description": "Ошибка валидации данных",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "Validation error",
+                        "type": "RequestValidationError",
+                        "details": [
+                            {
+                                "loc": ["body", "new_code"],
+                                "msg": "ensure this value has at least 4 characters",
+                                "type": "value_error.any_str.min_length"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+)
+async def set_entry_code(
+        user: UserAuthDep,
+        codes: UserSetCode,
+        service: UserServiceDep
+):
+    """
+    Установить код входа.
+
+    Позволяет авторизованному пользователю установить 4-значный код входа
+    """
+    await service.set_entry_code(user.id, codes)
 
 
 @router.patch(
