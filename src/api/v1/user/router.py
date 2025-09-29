@@ -66,6 +66,65 @@ async def set_entry_code(
     await service.set_entry_code(user.id, codes)
 
 
+@router.delete(
+    "/entry_code",
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Удалить код входа",
+    responses={
+        202: {
+            "description": "Код входа успешно удален",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "Код входа успешно удален"
+                    }
+                }
+            }
+        },
+        400: {
+            "description": "Ошибка удаления кода входа",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "Failed to delete code. Code is not correct.",
+                        "type": "EntryCodeUpdateError"
+                    }
+                }
+            }
+        },
+        422: {
+            "description": "Ошибка валидации данных",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "Validation error",
+                        "type": "RequestValidationError",
+                        "details": [
+                            {
+                                "loc": ["body", "new_code"],
+                                "msg": "ensure this value has at least 4 characters",
+                                "type": "value_error.any_str.min_length"
+                            }
+                        ]
+                    }
+                }
+            }
+        }
+    }
+)
+async def delete_entry_code(
+        user: UserAuthDep,
+        codes: UserSetCode,
+        service: UserServiceDep
+):
+    """
+    Удалить код входа.
+
+    Позволяет авторизованному пользователю убрать код входа
+    """
+    await service.delete_entry_code(user.id, codes)
+
+
 @router.patch(
     "/entry_code", 
     status_code=status.HTTP_200_OK,

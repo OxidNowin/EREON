@@ -20,3 +20,12 @@ class UserService(BaseService):
         updated = await self.uow.user.update_user_by_id(telegram_id, entry_code=user_code.code)
         if not updated:
             raise EntryCodeUpdateError("Failed to update entry code.")
+
+    async def delete_entry_code(self, telegram_id: int, user_code: UserSetCode):
+        is_code_correct = await self.uow.user.check_user_code(telegram_id, entry_code=user_code.code)
+        if not is_code_correct:
+            raise EntryCodeUpdateError("Failed to delete code. Code is not correct.")
+
+        updated = await self.uow.user.update_user_by_id(telegram_id, entry_code=None)
+        if not updated:
+            raise EntryCodeUpdateError("Failed to delete entry code.")
