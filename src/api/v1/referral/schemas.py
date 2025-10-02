@@ -19,6 +19,7 @@ class ReferralInfo(BaseModel):
     code: str = Field(..., description="Код для приглашения")
     active: bool = Field(..., description="Активен ли реферал")
     referral_type: ReferralType | None = Field(None, description="Тип реферальной программы")
+    referral_spending: float = Field(..., description="Денег потрачено при фиксированном типе реферальной программы")
     referral_count: int = Field(..., description="Количество приглашенных людей")
     balance: int = Field(..., description="Баланс реферала")
     referred_users: List[int] = Field(..., description="Список ID приглашенных пользователей")

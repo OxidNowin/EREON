@@ -25,12 +25,17 @@ class ReferralService(BaseService):
         referred_users = await self.uow.referral.get_referred_users(telegram_id)
         referred_user_ids = [user.telegram_id for user in referred_users]
 
+        referral_spending = 0
+        if referral.type == ReferralType.FIXED_INCOME:
+            referral_spending = await self.uow.operation.get_total_referrals_spending(referred_user_ids)
+
         return ReferralInfo(
             telegram_id=referral.telegram_id,
             referred_by=referral.referred_by,
             code=referral.code,
             active=referral.active,
             referral_type=referral.type,
+            referral_spending=referral_spending,
             referral_count=referral.referral_count,
             balance=referral.balance,
             referred_users=referred_user_ids

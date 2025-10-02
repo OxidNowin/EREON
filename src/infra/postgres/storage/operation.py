@@ -1,9 +1,11 @@
 from uuid import UUID
 from typing import Sequence
+from decimal import Decimal
 
-from sqlalchemy import select, update
+from sqlalchemy import select, update, func
 
 from infra.postgres.models import Operation, Wallet
+from infra.postgres.models.operation import OperationStatus
 from infra.postgres.storage.base_storage import PostgresStorage
 
 
@@ -65,3 +67,16 @@ class OperationStorage(PostgresStorage[Operation]):
         )
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none() is not None
+
+    async def get_total_referrals_spending(self, ids: Sequence[int]) -> Decimal:
+        stmt = (
+            select(func.coalesce(func.sum(Operation.total_amount), Decimal("0")))
+            .select_from(Operation)
+            .join(Wallet, Operation.wallet_id == Wallet.wallet_id)
+            .where(
+                Wallet.telegram_id.in_(ids),
+                Operation.status == OperationStatus.CONFIRMED
+            )
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar() or Decimal("0")
