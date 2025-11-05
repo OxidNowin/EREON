@@ -1,4 +1,5 @@
 from uuid import UUID
+from decimal import Decimal
 from typing import Sequence
 from sqlalchemy import select, update, func
 
@@ -62,3 +63,20 @@ class ReferralOperationStorage(PostgresStorage[ReferralOperation]):
         )
         result = await self._db.execute(stmt)
         return result.scalar() or 0
+
+    async def has_cpa_bonus_for_amount(self, referral_id: int, amount: Decimal) -> bool:
+        """Проверяет, был ли уже начислен CPA бонус с указанной суммой для реферала"""
+        from infra.postgres.models.referral_operation import ReferralOperationType, ReferralOperationStatus
+        
+        stmt = (
+            select(func.count(self.model_cls.referral_operation_id))
+            .where(
+                self.model_cls.referral_id == referral_id,
+                self.model_cls.amount == amount,
+                self.model_cls.operation_type == ReferralOperationType.DEPOSIT,
+                self.model_cls.status == ReferralOperationStatus.CONFIRMED
+            )
+        )
+        result = await self._db.execute(stmt)
+        count = result.scalar() or 0
+        return count > 0

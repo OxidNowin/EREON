@@ -5,7 +5,7 @@ from decimal import Decimal
 from sqlalchemy import select, update, func
 
 from infra.postgres.models import Operation, Wallet
-from infra.postgres.models.operation import OperationStatus
+from infra.postgres.models.operation import OperationStatus, OperationType
 from infra.postgres.storage.base_storage import PostgresStorage
 
 
@@ -76,6 +76,21 @@ class OperationStorage(PostgresStorage[Operation]):
             .where(
                 Wallet.telegram_id.in_(ids),
                 Operation.status == OperationStatus.CONFIRMED
+            )
+        )
+        result = await self._db.execute(stmt)
+        return result.scalar() or Decimal("0")
+
+    async def get_user_total_spending(self, telegram_id: int) -> Decimal:
+        """Получает общую сумму потраченных средств пользователем (только успешные операции списания)"""
+        stmt = (
+            select(func.coalesce(func.sum(Operation.total_amount), Decimal("0")))
+            .select_from(Operation)
+            .join(Wallet, Operation.wallet_id == Wallet.wallet_id)
+            .where(
+                Wallet.telegram_id == telegram_id,
+                Operation.status == OperationStatus.CONFIRMED,
+                Operation.operation_type == OperationType.WITHDRAW
             )
         )
         result = await self._db.execute(stmt)
