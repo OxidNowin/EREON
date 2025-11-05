@@ -104,7 +104,7 @@ class AlfaClient:
         """Получить данные по зарегистрированной платёжной ссылке"""
         try:
             token = await self._token_service.get_access_token(scope=AlfaScope.B2B_SBP)
-        except AlfaTokenError as e:
+        except Exception as e:
             logger.error(e)
             raise AlfaApiError("Не удалось получить доступ к API Alfa Bank")
         
