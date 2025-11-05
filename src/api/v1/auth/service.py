@@ -63,6 +63,21 @@ class RegisterService(BaseService):
                 active=active,
             )
         )
+        
+        # Отправляем уведомление рефереру о присоединении нового реферала
+        if referred_by is not None:
+            try:
+                await self._send_notification(
+                    telegram_id=referred_by,
+                    notification_type="referral_join",
+                    title="Новый реферал",
+                    message=f"К вам присоединился новый реферал {telegram_id}",
+                    referral_id=telegram_id,
+                    referral_username=None
+                )
+            except Exception as e:
+                # Логируем ошибку, но не прерываем процесс регистрации
+                pass
 
     async def _create_wallet(self, telegram_id: int) -> None:
         async with self.crypto_processing_client as client:

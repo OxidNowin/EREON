@@ -11,6 +11,7 @@ from api.v1 import (
     referral_router,
     rapira_router,
 )
+from api.v1.notification.router import router as notification_router
 
 
 v1_router = APIRouter(prefix="/api/v1", tags=["v1"])
@@ -22,6 +23,7 @@ v1_router.include_router(webhook_router)
 v1_router.include_router(payment_router)
 v1_router.include_router(referral_router)
 v1_router.include_router(rapira_router)
+v1_router.include_router(notification_router)
 
 
 __all__ = [
