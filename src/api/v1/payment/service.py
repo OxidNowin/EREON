@@ -184,6 +184,7 @@ class PaymentService(BaseService):
         elif referrer_referral.type == ReferralType.PERCENTAGE_INCOME:
             await self._process_revenue_share_reward(
                 user_referral.referred_by,
+                telegram_id,  # source_referral_id
                 commission,
                 referrer_referral.referral_count
             )
@@ -226,11 +227,17 @@ class PaymentService(BaseService):
         
         # Если количество бонусов меньше количества квалифицированных пользователей, начисляем
         if cpa_bonus_count < qualified_users_count:
-            await self._add_referral_reward(referrer_id, CPA_REWARD, ReferralOperationType.DEPOSIT)
+            await self._add_referral_reward(
+                referrer_id, 
+                CPA_REWARD, 
+                ReferralOperationType.DEPOSIT,
+                source_referral_id=user_id
+            )
 
     async def _process_revenue_share_reward(
         self, 
-        referrer_id: int, 
+        referrer_id: int,
+        source_referral_id: int,
         commission: Decimal, 
         referral_count: int
     ) -> None:
@@ -247,20 +254,33 @@ class PaymentService(BaseService):
         reward_amount = commission * percentage
         
         # Начисляем бонус
-        await self._add_referral_reward(referrer_id, reward_amount, ReferralOperationType.DEPOSIT)
+        await self._add_referral_reward(
+            referrer_id, 
+            reward_amount, 
+            ReferralOperationType.DEPOSIT,
+            source_referral_id=source_referral_id
+        )
 
     async def _add_referral_reward(
         self, 
         referrer_id: int, 
         amount: Decimal, 
-        operation_type: ReferralOperationType
+        operation_type: ReferralOperationType,
+        source_referral_id: int | None = None
     ) -> None:
         """
         Добавляет реферальное начисление и обновляет баланс реферала.
+        
+        Args:
+            referrer_id: ID реферера, которому начисляется бонус
+            amount: Сумма начисления
+            operation_type: Тип операции
+            source_referral_id: ID реферала, от которого пришла эта операция (опционально)
         """
         # Создаем операцию реферального начисления
         referral_operation = ReferralOperation(
             referral_id=referrer_id,
+            source_referral_id=source_referral_id,
             status=ReferralOperationStatus.CONFIRMED,
             operation_type=operation_type,
             amount=amount

@@ -3,7 +3,9 @@ from fastapi import APIRouter, status
 from api.v1.referral.schemas import (
     ReferralTypeSet, 
     ReferralInfo, 
-    ReferralOperationsResponse
+    ReferralOperationsResponse,
+    ReferralStatsResponse,
+    ReferralDepositOperationsResponse
 )
 from api.v1.referral.dependencies import ReferralServiceDep
 from api.v1.auth.dependencies import UserAuthDep
@@ -225,5 +227,162 @@ async def get_referral_operations(
     return await service.get_user_referral_operations(
         user.id, 
         limit=pagination.limit, 
+        offset=pagination.offset
+    )
+
+
+@router.get(
+    "/stats",
+    status_code=status.HTTP_200_OK,
+    response_model=ReferralStatsResponse,
+    summary="Получить статистику приглашенных рефералов",
+    description="Возвращает список приглашенных рефералов с информацией о суммах, полученных от каждого, "
+               "и процентным соотношением от общей суммы.\n\n"
+               "**Возвращаемая информация:**\n"
+               "- Список приглашенных рефералов с их статистикой\n"
+               "- Telegram ID каждого реферала\n"
+               "- Сумма, полученная от каждого реферала\n"
+               "- Процент от общей суммы всех рефералов (для процентного бейджа)\n"
+               "- Общая сумма, полученная от всех рефералов\n"
+               "- Общее количество рефералов\n\n"
+               "**Параметры пагинации:**\n"
+               "- `limit` - количество рефералов на страницу (по умолчанию: все)\n"
+               "- `offset` - смещение от начала списка (по умолчанию: 0)\n\n"
+               "**Требования:**\n"
+               "- Пользователь должен быть авторизован\n",
+    responses={
+        200: {
+            "description": "Статистика рефералов успешно получена",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "referrals": [
+                            {
+                                "telegram_id": 123456789,
+                                "username": None,
+                                "earned_amount": 100.5,
+                                "percentage": 50.25
+                            },
+                            {
+                                "telegram_id": 987654321,
+                                "username": None,
+                                "earned_amount": 99.5,
+                                "percentage": 49.75
+                            }
+                        ],
+                        "total": 2,
+                        "total_earned": 200.0,
+                        "limit": 10,
+                        "offset": 0
+                    }
+                }
+            }
+        },
+        404: {
+            "description": "Реферал не найден",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "Реферал не найден",
+                        "type": "ReferralNotFoundError"
+                    }
+                }
+            }
+        }
+    }
+)
+async def get_referrals_stats(
+    user: UserAuthDep,
+    service: ReferralServiceDep,
+    pagination: PaginationDep
+):
+    """
+    Получить статистику по приглашенным рефералам с пагинацией.
+    
+    Возвращает список всех приглашенных рефералов с информацией о том,
+    сколько средств было получено от каждого реферала, и процентным соотношением
+    от общей суммы всех рефералов.
+    """
+    return await service.get_referrals_stats(
+        user.id,
+        limit=pagination.limit,
+        offset=pagination.offset
+    )
+
+
+@router.get(
+    "/deposits",
+    status_code=status.HTTP_200_OK,
+    response_model=ReferralDepositOperationsResponse,
+    summary="Получить последние операции начисления на реферальный счет",
+    description="Возвращает список последних операций начисления (deposit) на реферальный счет пользователя "
+               "с информацией о рефералах, которые начислили эти суммы.\n\n"
+               "**Возвращаемая информация:**\n"
+               "- Список операций начисления с детальной информацией\n"
+               "- Telegram ID реферала, который начислил (source_referral_id)\n"
+               "- Username реферала, который начислил\n"
+               "- URL фото профиля реферала, который начислил\n"
+               "- Сумма начисления\n"
+               "- Дата создания операции\n"
+               "- Статус операции\n"
+               "- Общее количество операций начисления\n"
+               "- Суммарное количество приглашенных пользователей\n\n"
+               "**Параметры пагинации:**\n"
+               "- `limit` - количество операций на страницу (по умолчанию: все)\n"
+               "- `offset` - смещение от начала списка (по умолчанию: 0)\n\n"
+               "**Требования:**\n"
+               "- Пользователь должен быть авторизован\n",
+    responses={
+        200: {
+            "description": "Операции начисления успешно получены",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "operations": [
+                            {
+                                "referral_operation_id": "550e8400-e29b-41d4-a716-446655440000",
+                                "status": "confirmed",
+                                "amount": 100.50,
+                                "created_at": "2024-01-15T10:30:00",
+                                "source_referral_id": 123456789,
+                                "source_username": "username123",
+                                "source_avatar_url": "https://api.telegram.org/file/bot..."
+                            }
+                        ],
+                        "total": 1,
+                        "total_referrals": 5,
+                        "limit": 10,
+                        "offset": 0
+                    }
+                }
+            }
+        },
+        404: {
+            "description": "Реферал не найден",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "error": "Реферал не найден",
+                        "type": "ReferralNotFoundError"
+                    }
+                }
+            }
+        }
+    }
+)
+async def get_deposit_operations(
+    user: UserAuthDep,
+    service: ReferralServiceDep,
+    pagination: PaginationDep
+):
+    """
+    Получить последние операции начисления на реферальный счет с пагинацией.
+    
+    Возвращает список операций начисления (deposit) на реферальный счет пользователя
+    с информацией о рефералах, которые начислили эти суммы (username и фото профиля).
+    """
+    return await service.get_deposit_operations(
+        user.id,
+        limit=pagination.limit,
         offset=pagination.offset
     )

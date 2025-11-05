@@ -40,6 +40,12 @@ class ReferralOperation(Base, CreateUpdateTimestampMixin):
         ForeignKey("referral.telegram_id", onupdate="CASCADE", ondelete="CASCADE"),
         index=True,
     )
+    source_referral_id: Mapped[int | None] = mapped_column(
+        BigInteger,
+        ForeignKey("referral.telegram_id", onupdate="CASCADE", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     status: Mapped[ReferralOperationStatus] = mapped_column(
         Enum(ReferralOperationStatus, name="referral_operation_status_enum", native_enum=False),
         nullable=False,
