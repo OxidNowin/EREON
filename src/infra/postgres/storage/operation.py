@@ -22,8 +22,6 @@ class OperationStorage(PostgresStorage[Operation]):
             select(self.model_cls)
             .where(self.model_cls.wallet_id == wallet_id)
             .order_by(self.model_cls.created_at.desc())
-            .limit(limit)
-            .offset(offset)
         )
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -40,11 +38,9 @@ class OperationStorage(PostgresStorage[Operation]):
     ) -> Sequence[Operation]:
         stmt = (
             select(self.model_cls)
-            .join(self.model_cls.wallet)
+            .join(Wallet, Operation.wallet_id == Wallet.wallet_id)
             .where(Wallet.telegram_id == telegram_id)
             .order_by(self.model_cls.created_at.desc())
-            .limit(limit)
-            .offset(offset)
         )
         if limit is not None:
             stmt = stmt.limit(limit)
