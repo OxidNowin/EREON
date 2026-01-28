@@ -1,8 +1,14 @@
 import argparse
 import asyncio
 import random
+import sys
 from decimal import Decimal
+from pathlib import Path
 from uuid import UUID
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from infra.postgres.pg import get_db
 from infra.postgres.uow import PostgresUnitOfWork

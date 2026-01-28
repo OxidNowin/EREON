@@ -1,3 +1,4 @@
+import logging
 from typing import AsyncIterator, Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -10,6 +11,8 @@ from core.config import settings
 from crypto_processing.client import CryptoProcessingClient
 from infra.postgres.uow import PostgresUnitOfWorkDep
 from infra.redis.dependencies import RedisDep
+
+logger = logging.getLogger(__name__)
 
 telegram_authentication_schema = HTTPBase(scheme="Bearer")
 
@@ -41,9 +44,22 @@ async def get_current_user(
 ) -> WebAppUser:
     try:
         init_data = telegram_authenticator.validate(auth_cred.credentials)
-    except InvalidInitDataError:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden access.")
+    except InvalidInitDataError as e:
+        # Important: do NOT log full initData (it contains user data + signature)
+        preview = auth_cred.credentials[:64] + "..." if auth_cred.credentials else "<empty>"
+        logger.warning(
+            "Telegram initData validation failed: %s (len=%s, preview=%s)",
+            str(e),
+            len(auth_cred.credentials) if auth_cred.credentials else 0,
+            preview,
+        )
+        detail = "Forbidden access."
+        if getattr(settings, "DEBUG", False):
+            # Helps diagnose in dev without exposing initData itself
+            detail = f"Forbidden access. Invalid initData: {str(e)}"
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
     except Exception:
+        logger.exception("Unexpected error during Telegram initData validation")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal error.")
 
     if init_data.user is None:
