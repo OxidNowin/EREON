@@ -12,6 +12,7 @@ WORKDIR /app
 COPY alembic.ini .
 COPY certs/ certs/
 COPY migrations/ migrations/
+COPY scripts/ scripts/
 COPY src/ .
 
 CMD ["sh", "-c", "uv run alembic upgrade head && uv run python main.py"]
