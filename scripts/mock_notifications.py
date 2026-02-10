@@ -2,7 +2,12 @@ import argparse
 import asyncio
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Literal
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from api.v1.base.service import BaseService
 from infra.redis.redis_api import RedisAPI
