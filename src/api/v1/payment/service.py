@@ -8,11 +8,19 @@ from api.v1.base.service import BaseService
 from api.v1.payment.schemas import SbpPaymentCreate
 from banking.providers.alfa import PaymentStatus, AlfaApiError
 from infra.postgres.models import (
-    Operation, OperationStatus, OperationType, SbpPayment, SbpPaymentStatus,
-    ReferralType, ReferralOperation, ReferralOperationType, ReferralOperationStatus
+    Operation,
+    OperationStatus,
+    OperationType,
+    SbpPayment,
+    SbpPaymentStatus,
+    ReferralType,
+    ReferralOperation,
+    ReferralOperationType,
+    ReferralOperationStatus,
 )
 from api.v1.payment.exceptions import PaymentProcessingError, PaymentLinkError
 from api.v1.wallet.exceptions import WalletNotFoundError, InsufficientFundsError
+from api.v1.referral.levels import get_revenue_share_percentage
 
 logger = getLogger(__name__)
 
@@ -54,7 +62,11 @@ class PaymentService(BaseService):
         crypto_fee = (Decimal(payment_result.commission) / 100) / Decimal(payment_data.exchange)
         total_crypto_amount = crypto_fee + crypto_amount
 
-        operation_status, sbp_payment_status = self.status_map.get(payment_result.status)
+        status_tuple = self.status_map.get(payment_result.status)
+        if status_tuple is None:
+            raise PaymentProcessingError(f"Unsupported payment status: {payment_result.status}")
+
+        operation_status, sbp_payment_status = status_tuple
 
         operation = await self.uow.operation.add(
             Operation(
@@ -87,22 +99,14 @@ class PaymentService(BaseService):
             wallet.balance -= total_crypto_amount
             operation.status = OperationStatus.CONFIRMED
             sbp_payment.status = SbpPaymentStatus.CONFIRMED
-            
-            # Уведомление об изменении статуса операции
-            try:
-                await self._send_notification(
-                    telegram_id=wallet.telegram_id,
-                    notification_type="operation_status",
-                    title="Статус операции изменен",
-                    message=f"Статус операции {str(operation.operation_id)[:8]} изменен на confirmed на сумму {float(total_crypto_amount)} USDt",
-                    operation_id=str(operation.operation_id),
-                    operation_status="confirmed",
-                    amount=float(total_crypto_amount)
-                )
-            except Exception as e:
-                logger.error(f"Ошибка при отправке уведомления: {e}", exc_info=True)
-            
-            # Обработка реферальных начислений
+
+            await self._safe_notify_operation_status(
+                telegram_id=wallet.telegram_id,
+                operation_id=str(operation.operation_id),
+                operation_status="confirmed",
+                amount=float(total_crypto_amount),
+            )
+
             try:
                 await self._process_referral_rewards(wallet.telegram_id, crypto_fee)
             except Exception as e:
@@ -110,55 +114,38 @@ class PaymentService(BaseService):
             return sbp_payment
         elif payment_result.status == PaymentStatus.ERROR.value:
             return sbp_payment
-        else:
-            pass
 
         payment_completed = await self.is_payment_completed(payment_result.payment_id)
 
         if not payment_completed:
             operation.status = OperationStatus.CANCELLED
             sbp_payment.status = SbpPaymentStatus.CANCELLED
-            
-            # Уведомление об изменении статуса операции
-            try:
-                await self._send_notification(
-                    telegram_id=wallet.telegram_id,
-                    notification_type="operation_status",
-                    title="Статус операции изменен",
-                    message=f"Статус операции {str(operation.operation_id)[:8]} изменен на cancelled",
-                    operation_id=str(operation.operation_id),
-                    operation_status="cancelled",
-                    amount=float(total_crypto_amount)
-                )
-            except Exception as e:
-                logger.error(f"Ошибка при отправке уведомления: {e}", exc_info=True)
-            
+
+            await self._safe_notify_operation_status(
+                telegram_id=wallet.telegram_id,
+                operation_id=str(operation.operation_id),
+                operation_status="cancelled",
+                amount=float(total_crypto_amount),
+            )
+
             return sbp_payment
 
         wallet.balance -= total_crypto_amount
         operation.status = OperationStatus.CONFIRMED
         sbp_payment.status = SbpPaymentStatus.CONFIRMED
-        
-        # Уведомление об изменении статуса операции
-        try:
-            await self._send_notification(
-                telegram_id=wallet.telegram_id,
-                notification_type="operation_status",
-                title="Статус операции изменен",
-                message=f"Статус операции {str(operation.operation_id)[:8]} изменен на confirmed на сумму {float(total_crypto_amount)} USDt",
-                operation_id=str(operation.operation_id),
-                operation_status="confirmed",
-                amount=float(total_crypto_amount)
-            )
-        except Exception as e:
-            logger.error(f"Ошибка при отправке уведомления: {e}", exc_info=True)
-        
-        # Обработка реферальных начислений
+
+        await self._safe_notify_operation_status(
+            telegram_id=wallet.telegram_id,
+            operation_id=str(operation.operation_id),
+            operation_status="confirmed",
+            amount=float(total_crypto_amount),
+        )
+
         try:
             await self._process_referral_rewards(wallet.telegram_id, crypto_fee)
         except Exception as e:
             logger.error(f"Ошибка при обработке реферальных начислений: {e}", exc_info=True)
-        
+
         return sbp_payment
 
     async def is_payment_completed(self, payment_id: str) -> bool:
@@ -281,30 +268,29 @@ class PaymentService(BaseService):
             )
 
     async def _process_revenue_share_reward(
-        self, 
+        self,
         referrer_id: int,
         source_referral_id: int,
-        commission: Decimal, 
-        referral_count: int
+        commission: Decimal,
+        referral_count: int,
     ) -> None:
         """
         Обрабатывает Revenue Share начисление (процент от комиссии).
         """
         if commission <= 0:
-            return  # Нет комиссии для начисления
-        
-        # Получаем процент в зависимости от количества рефералов
-        percentage = self._get_revenue_share_percentage(referral_count)
-        
-        # Вычисляем сумму начисления
+            return
+
+        percentage = get_revenue_share_percentage(referral_count)
+        if percentage <= 0:
+            return
+
         reward_amount = commission * percentage
-        
-        # Начисляем бонус
+
         await self._add_referral_reward(
-            referrer_id, 
-            reward_amount, 
+            referrer_id,
+            reward_amount,
             ReferralOperationType.DEPOSIT,
-            source_referral_id=source_referral_id
+            source_referral_id=source_referral_id,
         )
 
     async def _add_referral_reward(
@@ -343,25 +329,9 @@ class PaymentService(BaseService):
             new_balance = referrer_referral.balance + amount_int
             await self.uow.referral.update(referrer_id, balance=new_balance)
             
-            # Отправляем уведомление о начислении на реферальный баланс
             if operation_type == ReferralOperationType.DEPOSIT:
-                try:
-                    # Получаем username реферала, если есть
-                    source_username = None
-                    if source_referral_id:
-                        # Можно получить username через Telegram API, но для простоты оставим None
-                        # В реальности можно добавить кэш или получить из базы
-                        pass
-                    
-                    await self._send_notification(
-                        telegram_id=referrer_id,
-                        notification_type="referral_deposit",
-                        title="Начисление на реферальный баланс",
-                        message=f"Начислено {float(amount)} USDt на реферальный баланс" + 
-                               (f" от реферала {source_referral_id}" if source_referral_id else ""),
-                        amount=float(amount),
-                        source_referral_id=source_referral_id,
-                        source_username=source_username
-                    )
-                except Exception as e:
-                    logger.error(f"Ошибка при отправке уведомления о начислении: {e}", exc_info=True)
+                await self._safe_notify_referral_deposit(
+                    telegram_id=referrer_id,
+                    amount=float(amount),
+                    source_referral_id=source_referral_id,
+                )

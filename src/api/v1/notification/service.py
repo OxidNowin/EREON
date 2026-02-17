@@ -1,5 +1,3 @@
-import uuid
-from datetime import datetime
 from typing import Literal
 
 from api.v1.base.service import BaseService
@@ -27,46 +25,31 @@ class NotificationService(BaseService):
         notification_type: Literal["operation_status", "referral_deposit", "referral_join"],
         title: str,
         message: str,
+        image_url: str | None = None,
+        detail_image_url: str | None = None,
         **extra_data
     ) -> dict:
-        """Создать уведомление для пользователя"""
-        if not self.redis:
-            return {}
-
-        notification_id = str(uuid.uuid4())
-        created_at = datetime.utcnow().isoformat()
-
-        notification_data = {
-            "notification_id": notification_id,
-            "type": notification_type,
-            "title": title,
-            "message": message,
-            "created_at": created_at,
-            "read": False,
+        """Создать уведомление для пользователя."""
+        result = await self._send_notification(
+            telegram_id=telegram_id,
+            notification_type=notification_type,
+            title=title,
+            message=message,
+            max_notifications=self.MAX_NOTIFICATIONS,
+            image_url=image_url,
+            detail_image_url=detail_image_url,
             **extra_data
-        }
-
-        # Добавляем уведомление в начало списка
-        notification_key = await self._get_notification_key(telegram_id)
-        await self.redis.lpush_json(notification_key, notification_data)
-
-        # Увеличиваем счетчик непрочитанных
-        unread_key = await self._get_unread_count_key(telegram_id)
-        await self.redis.incr(unread_key)
-
-        # Ограничиваем количество уведомлений
-        length = await self.redis.llen(notification_key)
-        if length > self.MAX_NOTIFICATIONS:
-            await self.redis.ltrim(notification_key, 0, self.MAX_NOTIFICATIONS - 1)
-
-        return notification_data
+        )
+        return result or {}
 
     async def create_operation_status_notification(
         self,
         telegram_id: int,
         operation_id: str,
         operation_status: str,
-        amount: float | None = None
+        amount: float | None = None,
+        image_url: str | None = None,
+        detail_image_url: str | None = None,
     ) -> dict:
         """Создать уведомление об изменении статуса операции"""
         title = "Статус операции изменен"
@@ -79,9 +62,11 @@ class NotificationService(BaseService):
             notification_type="operation_status",
             title=title,
             message=message,
+            image_url=image_url,
+            detail_image_url=detail_image_url,
             operation_id=operation_id,
             operation_status=operation_status,
-            amount=amount
+            amount=amount,
         )
 
     async def create_referral_deposit_notification(
@@ -89,7 +74,9 @@ class NotificationService(BaseService):
         telegram_id: int,
         amount: float,
         source_referral_id: int | None = None,
-        source_username: str | None = None
+        source_username: str | None = None,
+        image_url: str | None = None,
+        detail_image_url: str | None = None,
     ) -> dict:
         """Создать уведомление о начислении на реферальный баланс"""
         title = "Начисление на реферальный баланс"
@@ -105,16 +92,20 @@ class NotificationService(BaseService):
             notification_type="referral_deposit",
             title=title,
             message=message,
+            image_url=image_url,
+            detail_image_url=detail_image_url,
             amount=amount,
             source_referral_id=source_referral_id,
-            source_username=source_username
+            source_username=source_username,
         )
 
     async def create_referral_join_notification(
         self,
         telegram_id: int,
         referral_id: int,
-        referral_username: str | None = None
+        referral_username: str | None = None,
+        image_url: str | None = None,
+        detail_image_url: str | None = None,
     ) -> dict:
         """Создать уведомление о присоединении через реферальную ссылку"""
         title = "Новый реферал"
@@ -128,8 +119,10 @@ class NotificationService(BaseService):
             notification_type="referral_join",
             title=title,
             message=message,
+            image_url=image_url,
+            detail_image_url=detail_image_url,
             referral_id=referral_id,
-            referral_username=referral_username
+            referral_username=referral_username,
         )
 
     async def get_notifications(

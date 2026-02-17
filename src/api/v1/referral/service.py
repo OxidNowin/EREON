@@ -3,9 +3,18 @@ from logging import getLogger
 
 from api.v1.base.service import BaseService
 from api.v1.referral.schemas import (
-    ReferralInfo, ReferralOperationInfo, ReferralOperationsResponse,
-    ReferralStatsInfo, ReferralStatsResponse,
-    ReferralDepositOperationInfo, ReferralDepositOperationsResponse
+    ReferralInfo,
+    ReferralOperationInfo,
+    ReferralOperationsResponse,
+    ReferralStatsInfo,
+    ReferralStatsResponse,
+    ReferralDepositOperationInfo,
+    ReferralDepositOperationsResponse,
+)
+from api.v1.referral.levels import (
+    get_revenue_share_level,
+    get_revenue_share_percentage,
+    get_next_level_referrals_needed,
 )
 from infra.postgres.models import ReferralType
 from api.v1.referral.exceptions import ReferralNotFoundError, ReferralTypeAlreadySetError, ReferralUpdateError
@@ -92,6 +101,11 @@ class ReferralService(BaseService):
         if referral.type == ReferralType.FIXED_INCOME:
             referral_spending = await self.uow.operation.get_total_referrals_spending(referred_user_ids)
 
+        referral_count = referral.referral_count or 0
+        level = get_revenue_share_level(referral_count)
+        level_percentage = float(get_revenue_share_percentage(referral_count) * 100)
+        next_level_needed = get_next_level_referrals_needed(referral_count)
+
         return ReferralInfo(
             telegram_id=referral.telegram_id,
             referred_by=referral.referred_by,
@@ -101,7 +115,10 @@ class ReferralService(BaseService):
             referral_spending=referral_spending,
             referral_count=referral.referral_count,
             balance=referral.balance,
-            referred_users=referred_user_ids
+            referred_users=referred_user_ids,
+            level=level,
+            level_percentage=level_percentage,
+            next_level_referrals_needed=next_level_needed,
         )
 
     async def get_user_referral_operations(
@@ -175,21 +192,19 @@ class ReferralService(BaseService):
             )
             earned_amount_float = float(earned_amount)
             
-            # Вычисляем percentage в зависимости от типа реферальной программы
             percentage: float | None = None
             if referral.type == ReferralType.FIXED_INCOME:
-                # Для фиксированного типа: считаем процент от 150 USDt (сколько потрачено)
                 CPA_THRESHOLD = 150.0
                 user_spending = await self.uow.operation.get_user_total_spending(referred_user.telegram_id)
                 user_spending_float = float(user_spending)
-                
+
                 if user_spending_float >= CPA_THRESHOLD:
-                    percentage = 100.0  # Достигнут порог
+                    percentage = 100.0
                 else:
-                    # Считаем процент от 150 USDt (сколько потрачено из 150)
                     percentage = (user_spending_float / CPA_THRESHOLD) * 100
-            # Для PERCENTAGE_INCOME и если тип не установлен - percentage остается None
-            
+
+            level = get_revenue_share_level(referred_user.referral_count or 0)
+
             # Получаем username и avatar_url через Telegram Bot API
             username, avatar_url = await self._get_telegram_user_info(referred_user.telegram_id)
 
@@ -199,7 +214,8 @@ class ReferralService(BaseService):
                     username=username,
                     avatar_url=avatar_url,
                     earned_amount=earned_amount_float,
-                    percentage=round(percentage, 2) if percentage is not None else None
+                    percentage=round(percentage, 2) if percentage is not None else None,
+                    level=level,
                 )
             )
         

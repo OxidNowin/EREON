@@ -32,6 +32,8 @@ class MockNotificationService(BaseService):
         message: str,
         notification_type: Literal["operation_status", "referral_deposit", "referral_join"] = "operation_status",
         max_notifications: int = 100,
+        image_url: str | None = None,
+        detail_image_url: str | None = None,
     ) -> None:
         """
         Create a single mock notification for the given telegram_id.
@@ -42,12 +44,16 @@ class MockNotificationService(BaseService):
             title=title,
             message=message,
             max_notifications=max_notifications,
+            image_url=image_url,
+            detail_image_url=detail_image_url,
         )
 
 
 async def _run(
     telegram_id: int,
     count: int,
+    image_url: str | None = None,
+    detail_image_url: str | None = None,
 ) -> None:
     if telegram_id <= 0:
         raise ValueError("telegram_id must be a positive integer")
@@ -71,6 +77,8 @@ async def _run(
                 telegram_id=telegram_id,
                 title=title,
                 message=message,
+                image_url=image_url,
+                detail_image_url=detail_image_url,
             )
 
         print(f"Создано {count} мок-уведомлений для telegram_id={telegram_id}")
@@ -94,13 +102,30 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
         default=3,
         help="Количество мок-уведомлений, которые нужно создать (по умолчанию: 3).",
     )
+    parser.add_argument(
+        "--image-url",
+        type=str,
+        default=None,
+        help="URL превью-картинки для уведомления.",
+    )
+    parser.add_argument(
+        "--detail-image-url",
+        type=str,
+        default=None,
+        help="URL детальной картинки для уведомления.",
+    )
     return parser.parse_args(argv)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv or sys.argv[1:])
     try:
-        asyncio.run(_run(telegram_id=args.telegram_id, count=args.count))
+        asyncio.run(_run(
+            telegram_id=args.telegram_id,
+            count=args.count,
+            image_url=args.image_url,
+            detail_image_url=args.detail_image_url,
+        ))
     except Exception as exc:
         print(f"Ошибка при создании мок-уведомлений: {exc}", file=sys.stderr)
         return 1

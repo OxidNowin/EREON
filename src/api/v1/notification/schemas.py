@@ -21,6 +21,10 @@ class NotificationBase(BaseModel):
     message: str = Field(..., description="Текст уведомления")
     created_at: str = Field(..., description="Дата создания уведомления (ISO format)")
     read: bool = Field(default=False, description="Прочитано ли уведомление")
+    image_url: str | None = Field(None, description="URL превью-картинки уведомления")
+    detail_image_url: str | None = Field(None, description="URL детальной картинки уведомления")
+    action_url: str | None = Field(None, description="URL для кнопки действия (например, «Ознакомиться»)")
+    action_label: str | None = Field(None, description="Текст кнопки действия; если не задан — используется дефолтный")
 
 
 class OperationStatusNotification(NotificationBase):

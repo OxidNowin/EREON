@@ -23,6 +23,12 @@ class ReferralInfo(BaseModel):
     referral_count: int = Field(..., description="Количество приглашенных людей")
     balance: int = Field(..., description="Баланс реферала")
     referred_users: List[int] = Field(..., description="Список ID приглашенных пользователей")
+    level: int = Field(..., description="Текущий уровень пользователя в реферальной программе (1–5)")
+    level_percentage: float = Field(..., description="Процент ревшера для текущего уровня (0, 20, 30, 40, 50)")
+    next_level_referrals_needed: int | None = Field(
+        None,
+        description="Сколько рефералов не хватает до следующего уровня. None, если достигнут максимальный уровень.",
+    )
 
 
 class ReferralOperationInfo(BaseModel):
@@ -46,6 +52,7 @@ class ReferralStatsInfo(BaseModel):
     avatar_url: str | None = Field(None, description="URL фото профиля пользователя в Telegram (если доступен)")
     earned_amount: float = Field(..., description="Сумма, полученная от этого реферала")
     percentage: float | None = Field(None, description="Процент от 150 USDt для FIXED_INCOME (сколько осталось до порога), None для PERCENTAGE_INCOME")
+    level: int = Field(..., description="Уровень реферала в программе (1–5)")
 
 
 class ReferralStatsResponse(BaseModel):

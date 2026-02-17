@@ -68,8 +68,8 @@ async def get_current_user(
     tg_user = init_data.user
 
     if not await service.exist(tg_user.id):
-        # TODO выяснить как передаются аргументы и подставить реферальный код при регистрации
-        await service.register_user(tg_user.id)
+        referral_code = getattr(init_data, 'start_param', None)
+        await service.register_user(tg_user.id, referral_code=referral_code)
 
     if not await service.is_login(tg_user.id):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="need to log in.")
