@@ -36,7 +36,11 @@ router = APIRouter(prefix="/notifications", tags=["Notifications"])
                                 "title": "Начисление на реферальный баланс",
                                 "message": "Начислено 100.50 USDt от реферала @username123",
                                 "created_at": "2024-01-15T10:30:00",
-                                "read": False
+                                "read": False,
+                                "image_url": None,
+                                "detail_image_url": None,
+                                "action_url": "https://example.com/promo",
+                                "action_label": "Ознакомиться"
                             }
                         ],
                         "total": 1,
