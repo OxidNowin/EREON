@@ -273,7 +273,7 @@ async def get_referral_operations(
                             {
                                 "telegram_id": 987654321,
                                 "username": "bountyeater",
-                                "avatar_url": null,
+                                "avatar_url": None,
                                 "earned_amount": 99.5,
                                 "percentage": 49.75,
                                 "level": 3
