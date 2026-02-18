@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, field_validator, Field, model_validator
 
+from api.v1.base.schemas import DisplayDecimal
 from infra.postgres.models import WalletCurrency
 from crypto_processing.network import matcher
 
@@ -15,7 +16,7 @@ class Address(BaseModel):
 class WalletResponse(BaseModel):
     wallet_id: UUID = Field(..., description="Уникальный идентификатор кошелька")
     currency: WalletCurrency = Field(..., description="Тип криптовалюты кошелька", examples=["USDT"])
-    balance: Decimal = Field(..., description="Текущий баланс кошелька в основной валюте")
+    balance: DisplayDecimal = Field(..., description="Текущий баланс кошелька в основной валюте")
     addresses: list[Address] = Field(..., description="Список адресов для пополнения кошелька")
     icon: str = Field("")
 
