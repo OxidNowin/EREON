@@ -101,6 +101,7 @@ async def set_referral_type(
                "- Тип реферальной программы (если установлен)\n"
                "- Количество приглашенных пользователей\n"
                "- Текущий баланс реферальных начислений\n"
+               "- Уровень (1–5), процент ревшера и сколько рефералов до следующего уровня\n"
                "- Список ID приглашенных пользователей\n"
                "- Информация о том, кто пригласил данного пользователя\n\n"
                "**Требования:**\n"
@@ -116,9 +117,13 @@ async def set_referral_type(
                         "code": "abc123def456",
                         "active": True,
                         "referral_type": "FIXED_INCOME",
+                        "referral_spending": 0.0,
                         "referral_count": 5,
                         "balance": 1000,
-                        "referred_users": [111111111, 222222222, 333333333, 444444444, 555555555]
+                        "referred_users": [111111111, 222222222, 333333333, 444444444, 555555555],
+                        "level": 3,
+                        "level_percentage": 30.0,
+                        "next_level_referrals_needed": 3
                     }
                 }
             }
@@ -237,14 +242,14 @@ async def get_referral_operations(
     response_model=ReferralStatsResponse,
     summary="Получить статистику приглашенных рефералов",
     description="Возвращает список приглашенных рефералов с информацией о суммах, полученных от каждого, "
-               "и процентным соотношением от общей суммы.\n\n"
+               "уровне каждого реферала и процентном соотношении (для рефбэка).\n\n"
                "**Возвращаемая информация:**\n"
                "- Список приглашенных рефералов с их статистикой\n"
-               "- Telegram ID каждого реферала\n"
-               "- Сумма, полученная от каждого реферала\n"
-               "- Процент от общей суммы всех рефералов (для процентного бейджа)\n"
-               "- Общая сумма, полученная от всех рефералов\n"
-               "- Общее количество рефералов\n\n"
+               "- Telegram ID, username, avatar_url каждого реферала\n"
+               "- Сумма, полученная от каждого реферала (earned_amount)\n"
+               "- Уровень реферала (1–5)\n"
+               "- Процент прогресса до порога (для FIXED_INCOME) или null\n"
+               "- referral_type, total, total_earned, пагинация\n\n"
                "**Параметры пагинации:**\n"
                "- `limit` - количество рефералов на страницу (по умолчанию: все)\n"
                "- `offset` - смещение от начала списка (по умолчанию: 0)\n\n"
@@ -259,17 +264,22 @@ async def get_referral_operations(
                         "referrals": [
                             {
                                 "telegram_id": 123456789,
-                                "username": None,
+                                "username": "buffyhunter",
+                                "avatar_url": "https://api.telegram.org/file/bot.../photo.jpg",
                                 "earned_amount": 100.5,
-                                "percentage": 50.25
+                                "percentage": 50.25,
+                                "level": 5
                             },
                             {
                                 "telegram_id": 987654321,
-                                "username": None,
+                                "username": "bountyeater",
+                                "avatar_url": null,
                                 "earned_amount": 99.5,
-                                "percentage": 49.75
+                                "percentage": 49.75,
+                                "level": 3
                             }
                         ],
+                        "referral_type": "PERCENTAGE_INCOME",
                         "total": 2,
                         "total_earned": 200.0,
                         "limit": 10,

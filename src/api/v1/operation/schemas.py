@@ -7,6 +7,9 @@ from api.v1.base.schemas import DisplayDecimal
 from infra.postgres.models import OperationType, OperationStatus
 
 
+TRONSCAN_TX_URL = "https://tronscan.org/#/transaction"
+
+
 class OperationBase(BaseModel):
     operation_id: UUID = Field(..., description="Уникальный идентификатор операции")
     wallet_id: UUID = Field(..., description="ID кошелька, к которому относится операция")
@@ -16,5 +19,8 @@ class OperationBase(BaseModel):
     fee: DisplayDecimal = Field(..., description="Комиссия за операцию")
     total_amount: DisplayDecimal = Field(..., description="Общая сумма (сумма + комиссия)")
     created_at: datetime = Field(..., description="Дата и время создания операции")
+    tx_id: str | None = Field(None, description="Хэш транзакции в сети (для пополнения)")
+    network: str | None = Field(None, description="Сеть (например TRC20)")
+    explorer_url: str | None = Field(None, description="Ссылка на транзакцию в обозревателе (TronScan)")
 
     model_config = ConfigDict(from_attributes=True)

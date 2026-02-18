@@ -3,6 +3,7 @@ from typing import Sequence
 from decimal import Decimal
 
 from sqlalchemy import select, update, func
+from sqlalchemy.orm import selectinload
 
 from infra.postgres.models import Operation, Wallet
 from infra.postgres.models.operation import OperationStatus, OperationType
@@ -22,6 +23,7 @@ class OperationStorage(PostgresStorage[Operation]):
             select(self.model_cls)
             .where(self.model_cls.wallet_id == wallet_id)
             .order_by(self.model_cls.created_at.desc())
+            .options(selectinload(self.model_cls.crypto_replenishment))
         )
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -41,6 +43,7 @@ class OperationStorage(PostgresStorage[Operation]):
             .join(Wallet, Operation.wallet_id == Wallet.wallet_id)
             .where(Wallet.telegram_id == telegram_id)
             .order_by(self.model_cls.created_at.desc())
+            .options(selectinload(self.model_cls.crypto_replenishment))
         )
         if limit is not None:
             stmt = stmt.limit(limit)
@@ -50,7 +53,11 @@ class OperationStorage(PostgresStorage[Operation]):
         return result.scalars().all()
 
     async def get_operation(self, operation_id: UUID) -> Operation | None:
-        stmt = select(self.model_cls).where(self.model_cls.operation_id == operation_id)
+        stmt = (
+            select(self.model_cls)
+            .where(self.model_cls.operation_id == operation_id)
+            .options(selectinload(self.model_cls.crypto_replenishment))
+        )
         result = await self._db.execute(stmt)
         return result.scalar_one_or_none()
 

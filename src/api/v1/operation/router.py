@@ -1,12 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException, status
 
 from api.v1.operation.schemas import OperationBase
 from api.v1.operation.dependencies import OperationServiceDep
 from api.v1.base.dependencies import PaginationDep
 from api.v1.auth.dependencies import UserAuthDep
-from infra.postgres.models import Operation
 
 router = APIRouter(tags=["Operation"])
 
@@ -206,5 +205,8 @@ async def get_operation_handler(
     user: UserAuthDep,
     operation_id: UUID,
     service: OperationServiceDep
-) -> Operation:
-    return await service.get_operation(operation_id)
+):
+    result = await service.get_operation(operation_id)
+    if result is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Operation not found")
+    return result
