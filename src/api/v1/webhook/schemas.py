@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic import BaseModel, Field
 from decimal import Decimal
 
@@ -8,3 +10,4 @@ class CryptocurrencyReplenishmentCreate(BaseModel):
     to_address: str = Field(..., description="Адрес получателя (base58)")
     amount: Decimal = Field(..., description="Сумма в USDT")
     crypto_type: str = Field(..., description="Тип криптовалюты (например, USDT)")
+    type: Literal["refill", "withdraw"] = Field(..., description="Тип операции")

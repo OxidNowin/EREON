@@ -32,7 +32,7 @@ class WebhookService(BaseService):
 
         replenishment = CryptocurrencyReplenishment(
             operation_id=operation.operation_id,
-            **webhook_data.model_dump()
+            **webhook_data.model_dump(exclude={"type"})
         )
         await self.uow.cryptocurrency_replenishment.add(replenishment)
 
