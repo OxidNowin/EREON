@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from api.v1.base.service import BaseService
 from api.v1.webhook.schemas import CryptocurrencyReplenishmentCreate
 from infra.postgres.models import CryptocurrencyReplenishment, Operation, OperationStatus, OperationType
@@ -17,8 +19,7 @@ class WebhookService(BaseService):
             raise WalletNotFoundError(f"Wallet with address {webhook_data.to_address} is not found")
 
         fee = matcher.get_network_fee(webhook_data.to_address)
-        net_amount = webhook_data.amount - fee
-
+        net_amount = max(Decimal("0"), webhook_data.amount - fee)
 
         operation = Operation(
             wallet_id=wallet.wallet_id,
