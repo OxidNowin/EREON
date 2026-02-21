@@ -1,10 +1,24 @@
 from fastapi import APIRouter, status
 
-from api.v1.user.schemas import UserChangeCode, UserSetCode
+from api.v1.user.schemas import UserChangeCode, UserSetCode, MeResponse
 from api.v1.user.dependencies import UserServiceDep
-from api.v1.auth.dependencies import UserAuthDep
+from api.v1.auth.dependencies import UserAuthDep, UserWithRegistrationStatusDep
 
 router = APIRouter(prefix="/user", tags=["User"])
+
+
+@router.get(
+    "/me",
+    response_model=MeResponse,
+    summary="Текущий пользователь и флаг нового пользователя",
+)
+async def get_me(auth_context: UserWithRegistrationStatusDep) -> MeResponse:
+    """
+    Возвращает флаг is_new_user для фронта.
+    True — пользователь зарегистрирован в рамках текущего входа (первый визит).
+    False — пользователь уже был зарегистрирован ранее.
+    """
+    return MeResponse(is_new_user=auth_context.is_new_user)
 
 
 @router.post(

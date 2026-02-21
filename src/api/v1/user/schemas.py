@@ -35,4 +35,11 @@ class UserSetCode(BaseModel):
     )
 
 
+class MeResponse(BaseModel):
+    is_new_user: bool = Field(
+        ...,
+        description="True, если пользователь зарегистрирован впервые в рамках текущего входа",
+    )
+
+
 
