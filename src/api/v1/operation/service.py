@@ -11,12 +11,9 @@ class OperationService(BaseService):
     def _to_operation_base(self, op: Operation) -> OperationBase:
         base = OperationBase.model_validate(op)
         if op.crypto_replenishment:
-            return OperationBase(
-                **base.model_dump(),
-                tx_id=op.crypto_replenishment.tx_id,
-                network="TRC20",
-                explorer_url=f"{TRONSCAN_TX_URL}/{op.crypto_replenishment.tx_id}",
-            )
+            base.tx_id = op.crypto_replenishment.tx_id
+            base.network = "TRC20"
+            base.explorer_url = f"{TRONSCAN_TX_URL}/{op.crypto_replenishment.tx_id}"
         return base
 
     async def get_operations_by_wallet(
