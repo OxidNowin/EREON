@@ -10,15 +10,22 @@ router = APIRouter(prefix="/user", tags=["User"])
 @router.get(
     "/me",
     response_model=MeResponse,
-    summary="Текущий пользователь и флаг нового пользователя",
+    summary="Текущий пользователь и флаги для фронта",
 )
-async def get_me(auth_context: UserWithRegistrationStatusDep) -> MeResponse:
+async def get_me(
+    auth_context: UserWithRegistrationStatusDep,
+    service: UserServiceDep,
+) -> MeResponse:
     """
-    Возвращает флаг is_new_user для фронта.
-    True — пользователь зарегистрирован в рамках текущего входа (первый визит).
-    False — пользователь уже был зарегистрирован ранее.
+    Возвращает is_new_user и is_pin_required для фронта.
+    is_new_user: первый визит — показывать welcome; иначе — в кошелёк.
+    is_pin_required: у пользователя установлен PIN — показывать экран ввода PIN.
     """
-    return MeResponse(is_new_user=auth_context.is_new_user)
+    has_pin = await service.uow.user.has_entry_code(auth_context.user.id)
+    return MeResponse(
+        is_new_user=auth_context.is_new_user,
+        is_pin_required=has_pin,
+    )
 
 
 @router.post(

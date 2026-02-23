@@ -40,6 +40,10 @@ class MeResponse(BaseModel):
         ...,
         description="True, если пользователь зарегистрирован впервые в рамках текущего входа",
     )
+    is_pin_required: bool = Field(
+        ...,
+        description="True, если у пользователя установлен PIN — фронт должен показывать экран ввода PIN",
+    )
 
 
 
