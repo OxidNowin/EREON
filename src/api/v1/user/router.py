@@ -1,8 +1,13 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, Depends, status
 
 from api.v1.user.schemas import UserChangeCode, UserSetCode, MeResponse
 from api.v1.user.dependencies import UserServiceDep
-from api.v1.auth.dependencies import UserAuthDep, UserWithRegistrationStatusDep
+from api.v1.auth.dependencies import (
+    UserAuthDep,
+    UserWithRegistrationStatusDep,
+    get_register_service,
+)
+from api.v1.auth.service import RegisterService
 
 router = APIRouter(prefix="/user", tags=["User"])
 
@@ -26,6 +31,24 @@ async def get_me(
         is_new_user=auth_context.is_new_user,
         is_pin_required=has_pin,
     )
+
+
+@router.post(
+    "/complete_onboarding",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Завершить онбординг",
+)
+async def complete_onboarding(
+    auth_context: UserWithRegistrationStatusDep,
+    service: RegisterService = Depends(get_register_service),
+) -> None:
+    """
+    Помечает онбординг завершённым (onboarding_completed=true) и при необходимости
+    создаёт кошелёк. Фронт вызывает после прохождения welcome-экранов.
+    После вызова GET /me возвращает is_new_user=false.
+    """
+    await service.set_onboarding_completed(auth_context.user.id)
+    await service.ensure_wallet(auth_context.user.id)
 
 
 @router.post(

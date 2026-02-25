@@ -18,6 +18,9 @@ class User(Base, CreateTimestampMixin):
     email: Mapped[str | None] = mapped_column(Text, nullable=True, unique=True)
     email_verified: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false", nullable=False)
     entry_code: Mapped[str | None] = mapped_column(CHAR(4), nullable=True)
+    onboarding_completed: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="false", nullable=False
+    )
 
     referral: Mapped["Referral"] = relationship(
         "Referral",

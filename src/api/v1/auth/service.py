@@ -43,8 +43,21 @@ class RegisterService(BaseService):
     async def register_user(self, telegram_id: int, referral_code: str | None = None) -> None:
         await self._create_user(telegram_id)
         await self._create_referral(telegram_id, referral_code)
-        await self._create_wallet(telegram_id)
         await self.redis.set(f"{self.USER_REDIS_SPACENAME}:{telegram_id}", "", self.USER_REDIS_EXPIRE)
+
+    async def ensure_wallet(self, telegram_id: int) -> None:
+        if await self.uow.wallet.has_wallet(telegram_id):
+            return
+        await self._create_wallet(telegram_id)
+
+    async def has_wallet(self, telegram_id: int) -> bool:
+        return await self.uow.wallet.has_wallet(telegram_id)
+
+    async def get_onboarding_completed(self, telegram_id: int) -> bool:
+        return await self.uow.user.get_onboarding_completed(telegram_id)
+
+    async def set_onboarding_completed(self, telegram_id: int) -> None:
+        await self.uow.user.update_user_by_id(telegram_id, onboarding_completed=True)
 
     async def _create_user(self, telegram_id: int):
         await self.uow.user.add(User(telegram_id=telegram_id))

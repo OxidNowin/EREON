@@ -10,6 +10,13 @@ from infra.postgres.storage.base_storage import PostgresStorage
 class WalletStorage(PostgresStorage[Wallet]):
     model_cls = Wallet
 
+    async def has_wallet(self, telegram_id: int) -> bool:
+        stmt = select(literal(1)).where(
+            self.model_cls.telegram_id == telegram_id
+        ).limit(1)
+        result = await self._db.execute(stmt)
+        return result.scalar_one_or_none() is not None
+
     async def get_wallet_by_address_for_update(self, address: str) -> Wallet | None:
         stmt = (
             select(self.model_cls)

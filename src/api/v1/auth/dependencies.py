@@ -76,7 +76,8 @@ async def _build_auth_user_context(
         referral_code = getattr(init_data, 'start_param', None)
         await service.register_user(tg_user.id, referral_code=referral_code)
 
-    return AuthUserContext(user=tg_user, is_new_user=not user_exists)
+    is_new_user = not await service.get_onboarding_completed(tg_user.id)
+    return AuthUserContext(user=tg_user, is_new_user=is_new_user)
 
 
 async def get_current_user_with_registration_status(
